@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Calendar Gantt</title>
+<link href="css/style.css" media="screen, projection" rel="stylesheet" type="text/css" />
+
+<!--  jquery core -->
+<script src="js/jquery/jquery-1.4.1.min.js" type="text/javascript"></script>
+<script src="js/jquery/jquery-ui.min.js" type="text/javascript"></script>
+
+<!-- Vector -->
+<script src="js/vectorManager/vectorManager-1.2-min.js" type="text/javascript"></script>
+<link href="js/vectorManager/vectorManager.css" rel="stylesheet">
+
+<!-- Calendar -->
+<link href="js/ganttCalendar/css/ganttCalendar.css" media="screen, projection" rel="stylesheet" type="text/css" />
+<script src="js/ganttCalendar/ganttCalendar-1.1-min.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+
+$(function() {
+	//Event(ressourceId, eventId, startDay, endDay, label)
+	
+	// 2012 - oct :
+	var evt1 = new EventCal(1, "event_001", 2, 5, "Event Paris - WSDD");
+	var evt2 = new EventCal(2, "event_002", 2, 5, "Paris - WSDD(2-5)");
+	
+	// 2012 - nov :
+	var evt3 = new EventCal(3, "event_003", 3, 5, "SF - EEES(3-5)");
+	var evt3bis = new EventCal(4, "event_003BIS", 8, 14, "SF - Paintings");
+	var evt4 = new EventCal(5, "event_004", 7, 9, "team (7-9)");
+
+	var timeline = new TimeLineMonth("myGanttCalendar",10, 2012,
+			{groups: 
+				[  {name: "Singers",
+					id: 1,
+					resources: [{name:"Henri", id:1}, 
+					             {name:"Frank", id:2},
+					             {name:"Jenny", id:3}]
+				}, {name: "Objects",
+					id: 2,
+					resources: [{name:"Micro",id:4}, 
+					             {name:"Ampli", id:5}]
+				}]
+			},
+			function(){
+				switch(this.year){
+					case 2011:
+						break;
+					case 2012:
+						switch (this.month) {
+						case 10:
+							evt1.drawIn(this.container);
+							evt1.jObject.addClass("specialEvent");
+							evt2.drawIn(this.container);
+							evt2.jObject.addClass("flagEvent");
+							break;
+						case 11:
+							evt3.drawIn(this.container);
+							evt3bis.drawIn(this.container);
+							evt3bis.jObject.addClass("lockEvent");
+							evt4.drawIn(this.container);
+							break;
+
+						default:
+							break;
+						}
+						break;
+					default:
+						break;
+				}
+				 
+				//alert("month changed : " + this.month);
+			}
+	);
+	
+	timeline.lang = 'fr';
+	timeline.drawElements();
+	timeline.updateMonthCallback();
+	
+	evt1.jObject.mouseover(
+	function(e){
+		var infoBox = $("#info_evt1");
+		var x = e.pageX - this.offsetLeft;
+		var y = e.pageY - this.offsetTop;
+		infoBox.css("left",x+60);
+		infoBox.css("top",y+15);
+		infoBox.show();
+	});
+	evt1.jObject.mouseout(function(e){
+		$("#info_evt1").hide();
+	});
+
+	
+});
+</script>
+
+
+
+</head>
+<body>
+
+<div id="myGanttCalendar">
+</div>
+
+<div id="info_evt1" class="infoBox" style="display:none;position: absolute; top:10; left:10;">
+	<div class="header">Event Paris - WSDD</div>
+	<div class="content">
+		La 3e et la plus importante conférence des Nations Unies sur l’environnement et le
+développement durable, aussi connue sous le nom de « Sommet planète Terre », a eu lieu à RIO
+de Janeiro, au Brésil en juin 1992. Cette conférence a réuni les dirigeants politiques, les
+diplomates, les scientifiques, les représentants des organisations non gouvernementales (ONG)
+de 182 pays dans un élan visant à concilier l’impact des activités socio-économiques humaines et
+l’environnement.
+
+	</div>
+</div>
+
+<!-- div class="debug"></div-->
+
+
+</body>
+</html>

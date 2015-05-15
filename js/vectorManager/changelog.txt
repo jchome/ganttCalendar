@@ -1,0 +1,5 @@
+ChangeLog:
+
+1.1 : Added IE support (bugfix on array sorting)
+
+1.0 : Original version

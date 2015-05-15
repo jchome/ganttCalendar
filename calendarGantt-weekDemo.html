@@ -1,0 +1,304 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Calendar Gantt</title>
+
+<!--  jquery core -->
+<script src="js/jquery/jquery-1.4.1.min.js" type="text/javascript"></script>
+<script src="js/jquery/jquery-ui.min.js" type="text/javascript"></script>
+<link href="js/jquery/jquery-ui-1.10.2.custom.css" rel="stylesheet">
+
+<link href="js/google-code-prettify/prettify.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="js/google-code-prettify/prettify.js"></script>
+
+<!-- Vector -->
+<script src="js/vectorManager/vectorManager-1.2-min.js" type="text/javascript"></script>
+<link href="js/vectorManager/vectorManager.css" rel="stylesheet">
+
+<!-- Calendar -->
+<link href="js/ganttCalendar/css/ganttCalendar.css" media="screen, projection" rel="stylesheet" type="text/css" />
+<script src="js/ganttCalendar/ganttCalendar-1.1-min.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+
+$(function() {
+	// Definition : EventCal(ressourceId, eventId, startDay, endDay, label)
+	
+	var evt1 = new EventCal(1, "event_001", 4, 5, "Event Paris - WSDD");
+	var evt2 = new EventCal(2, "event_002", 5, 7, "Paris - WSDD(2-5)");
+	var evt3 = new EventCal(2, "event_003", 14, 17, "Préparation Evènement");
+	var evt5 = new EventCal(3, "event_005", 9, 11, "Week-end");
+	var evt6 = new EventCal(4, "event_006", 9, 11, "Week-end");
+	var evt7 = new EventCal(5, "event_007", 9, 11, "Week-end");
+	var evt8 = new EventCal(6, "event_008", 9, 11, "Week-end");
+	var evt9 = new EventCal(7, "event_009", 9, 11, "Week-end");
+	var evt10 = new EventCal(8, "event_010", 9, 11, "Week-end");
+	var evt11 = new EventCal(9, "event_011", 9, 11, "Week-end");
+	var evt12 = new EventCal(10, "event_012", 9, 11, "Week-end");
+	var evt13 = new EventCal(11, "event_013", 9, 11, "Week-end");
+	var evt14 = new EventCal(1, "event_014", 9, 11, "Week-end");
+	var evt15 = new EventCal(2, "event_015", 9, 11, "Week-end");
+
+	var evt101 = new EventCal(101, "event_101", 7, 8, "Répétition générale");
+	var evt102 = new EventCal(102, "event_102", 6, 8, "Contrôle qualité");
+
+	var timeline = new TimeLineWeek("myGanttCalendar",10, 2013,
+			{groups: 
+				[  {name: "Singers",
+					id: 1,
+					resources: [{name:"Henri", id:1}, 
+					             {name:"Frank", id:2},
+					             {name:"Jenny", id:3},
+					             {name:"Stan", id:4},
+					             {name:"Sammy", id:5},
+					             {name:"Jason", id:6},
+					             {name:"Robert", id:7},
+					             {name:"Madison", id:8},
+					             {name:"Juliette", id:9},
+					             {name:"Nassa", id:10},
+					             {name:"Tamara", id:11}]
+				}, {name: "Objects",
+					id: 2,
+					resources: [{name:"Micro",id:101}, 
+					             {name:"Ampli", id:102}]
+				}]
+			},
+			function(){ // updateWeekCallback()
+				switch(this.year){
+					case 2011:
+						break;
+					case 2013:
+						switch (this.weekNumber) {
+						case 10:
+							evt1.drawIn(this);
+							evt2.drawIn(this);
+							evt5.drawIn(this);
+							evt6.drawIn(this);
+							evt7.drawIn(this);
+							evt8.drawIn(this);
+							evt9.drawIn(this);
+							evt10.drawIn(this);
+							evt11.drawIn(this);
+							evt12.drawIn(this);
+							evt13.drawIn(this);
+							evt14.drawIn(this);
+							evt15.drawIn(this);
+							evt101.drawIn(this);
+							evt102.drawIn(this);
+							
+							evt1.jObject.addClass("specialEvent");
+							evt2.jObject.addClass("flagEvent");
+							evt5.jObject.addClass("flagEvent");
+							break;
+						case 11:
+							evt3.drawIn(this);
+							break;
+
+						default:
+							break;
+						}
+						break;
+					default:
+						break;
+				}
+				this.updateOccupation();
+			}
+	);
+
+	timeline.lang = 'fr';
+	timeline.cellWidth = 150;
+	timeline.drawElements();
+	timeline.updateWeekCallback();
+
+	
+	evt1.jObject.mouseover(
+	function(e){
+		var infoBox = $("#info_evt1");
+		var x = e.pageX - this.offsetLeft;
+		var y = e.pageY - this.offsetTop;
+		infoBox.css("left",x+10);
+		infoBox.css("top",y+15);
+		infoBox.show();
+	});
+	evt1.jObject.mouseout(function(e){
+		$("#info_evt1").hide();
+	});
+	
+	/** 
+	 * Zoom feature
+	 */
+	 $( "#zoomSlider" ).slider({ min:50, max: 200, step: 50, 
+		 value: timeline.cellWidth, 
+		 change: function( event, ui ) { 
+			timeline.cellWidth = ui.value;
+			timeline.drawElements();
+			timeline.updateWeekCallback(); 
+			$("#zoomValue").html(ui.value);
+		 } 
+	 });
+	 $("#zoomValue").html(timeline.cellWidth);
+});
+</script>
+
+
+
+</head>
+<body onload="prettyPrint()">
+<h1>GanttCalendar Demo</h1>
+<p>Démo du mode "Affichage hebdomadaire" avec 4 niveaux de zoom.
+<br/>
+<a href="http://julien.coron.free.fr/?tag=gantt-calendar">Retour à l'article</a>
+|
+<a href="calendarGantt-monthDemo.html">Calendrier Mensuel</a>
+</p>
+
+<div id="myGanttCalendar">
+</div>
+
+<div style="margin: 20px;">Zoom :
+		<div class="zoomWidget">
+			<div id="zoomSlider"></div>
+			<div id="zoomValue"></div>
+		</div>
+</div>	
+
+
+<div id="info_evt1" class="infoBox" style="display:none;position: absolute; top:10; left:10;">
+	<div class="header">Event Paris - WSDD</div>
+	<div class="content">
+		La 3e et la plus importante conférence des Nations Unies sur l’environnement et le
+développement durable, aussi connue sous le nom de « Sommet planète Terre », a eu lieu à RIO
+de Janeiro, au Brésil en juin 1992. Cette conférence a réuni les dirigeants politiques, les
+diplomates, les scientifiques, les représentants des organisations non gouvernementales (ONG)
+de 182 pays dans un élan visant à concilier l’impact des activités socio-économiques humaines et
+l’environnement.
+
+	</div>
+</div>
+
+<div class="debug"></div>
+<pre class="prettyprint">
+
+$(function() {
+	// Definition : EventCal(ressourceId, eventId, startDay, endDay, label)
+	
+	var evt1 = new EventCal(1, "event_001", 4, 5, "Event Paris - WSDD");
+	var evt2 = new EventCal(2, "event_002", 5, 7, "Paris - WSDD(2-5)");
+	var evt3 = new EventCal(2, "event_003", 14, 17, "Préparation Evènement");
+	var evt5 = new EventCal(3, "event_005", 9, 11, "Week-end");
+	var evt6 = new EventCal(4, "event_006", 9, 11, "Week-end");
+	var evt7 = new EventCal(5, "event_007", 9, 11, "Week-end");
+	var evt8 = new EventCal(6, "event_008", 9, 11, "Week-end");
+	var evt9 = new EventCal(7, "event_009", 9, 11, "Week-end");
+	var evt10 = new EventCal(8, "event_010", 9, 11, "Week-end");
+	var evt11 = new EventCal(9, "event_011", 9, 11, "Week-end");
+	var evt12 = new EventCal(10, "event_012", 9, 11, "Week-end");
+	var evt13 = new EventCal(11, "event_013", 9, 11, "Week-end");
+	var evt14 = new EventCal(1, "event_014", 9, 11, "Week-end");
+	var evt15 = new EventCal(2, "event_015", 9, 11, "Week-end");
+
+	var evt101 = new EventCal(101, "event_101", 7, 8, "Répétition générale");
+	var evt102 = new EventCal(102, "event_102", 6, 8, "Contrôle qualité");
+
+	var timeline = new TimeLineWeek("myGanttCalendar",10, 2013,
+			{groups: 
+				[  {name: "Singers",
+					id: 1,
+					resources: [{name:"Henri", id:1}, 
+					             {name:"Frank", id:2},
+					             {name:"Jenny", id:3},
+					             {name:"Stan", id:4},
+					             {name:"Sammy", id:5},
+					             {name:"Jason", id:6},
+					             {name:"Robert", id:7},
+					             {name:"Madison", id:8},
+					             {name:"Juliette", id:9},
+					             {name:"Nassa", id:10},
+					             {name:"Tamara", id:11}]
+				}, {name: "Objects",
+					id: 2,
+					resources: [{name:"Micro",id:101}, 
+					             {name:"Ampli", id:102}]
+				}]
+			},
+			function(){ // updateWeekCallback()
+				switch(this.year){
+					case 2011:
+						break;
+					case 2013:
+						switch (this.weekNumber) {
+						case 10:
+							evt1.drawIn(this);
+							evt2.drawIn(this);
+							evt5.drawIn(this);
+							evt6.drawIn(this);
+							evt7.drawIn(this);
+							evt8.drawIn(this);
+							evt9.drawIn(this);
+							evt10.drawIn(this);
+							evt11.drawIn(this);
+							evt12.drawIn(this);
+							evt13.drawIn(this);
+							evt14.drawIn(this);
+							evt15.drawIn(this);
+							evt101.drawIn(this);
+							evt102.drawIn(this);
+							
+							evt1.jObject.addClass("specialEvent");
+							evt2.jObject.addClass("flagEvent");
+							evt5.jObject.addClass("flagEvent");
+							break;
+						case 11:
+							evt3.drawIn(this);
+							break;
+
+						default:
+							break;
+						}
+						break;
+					default:
+						break;
+				}
+				this.updateOccupation();
+			}
+	);
+
+	timeline.lang = 'fr';
+	timeline.cellWidth = 150;
+	timeline.drawElements();
+	timeline.updateWeekCallback();
+
+	
+	evt1.jObject.mouseover(
+	function(e){
+		var infoBox = $("#info_evt1");
+		var x = e.pageX - this.offsetLeft;
+		var y = e.pageY - this.offsetTop;
+		infoBox.css("left",x+10);
+		infoBox.css("top",y+15);
+		infoBox.show();
+	});
+	evt1.jObject.mouseout(function(e){
+		$("#info_evt1").hide();
+	});
+	
+	/** 
+	 * Zoom feature
+	 */
+	 $( "#zoomSlider" ).slider({ min:50, max: 200, step: 50, 
+		 value: timeline.cellWidth, 
+		 change: function( event, ui ) { 
+			timeline.cellWidth = ui.value;
+			timeline.drawElements();
+			timeline.updateWeekCallback(); 
+			$("#zoomValue").html(ui.value);
+		 } 
+	 });
+	 $("#zoomValue").html(timeline.cellWidth);
+});
+</pre>
+
+</body>
+</html>

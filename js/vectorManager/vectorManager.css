@@ -1,0 +1,156 @@
+@CHARSET "UTF-8";
+
+.VectorManager .pageContainer{
+	float: left;
+	clear: both;
+	width: 100%;
+}
+
+.VectorManager .content{
+	margin-left: 250px;
+}
+
+body.VectorManager{
+	font-size: 14px;
+}
+
+.VectorManager h1, h2, h3, h4, h5 {
+	color: #414141;
+	font-weight: normal;
+	font-family: Verdana, 'Arial', 'Helvetica', 'Sans-serif';
+}
+.VectorManager h1{
+	border-bottom: 1px solid #E0E0E0;
+	font-weight: bold;
+}
+
+.VectorManager h2{
+	border-bottom: 1px solid #E0E0E0;
+}
+
+.VectorManager h3.api{
+	background-color: #E0E0E0;
+	font-family: monospace;
+	padding: 10px;
+	margin-top: 20px;
+}
+
+.VectorManager .detail{
+	margin-left: 30px;
+	font-family: 'Arial', 'Helvetica', 'Sans-serif';
+	font-size: 14px;
+	color: #444;
+	line-height: 17px;
+}
+
+.VectorManager code.prettyprint{
+	border: 1px solid #aaa;
+	margin: 10px;
+	
+}
+
+.VectorManager .presenter{
+	float: left;
+	clear: both;
+	margin: 20px 50px;
+	font-family: 'Arial', 'Helvetica', 'Sans-serif';
+	width: 90%;
+}
+
+
+.VectorManager .vectorDisplay{
+	border: 1px solid #aaa;
+	padding: 5px;
+	width: 546px;
+}
+
+.VectorManager .vectorDisplay .ruler{
+	font-family: 'Arial', 'Helvetica', 'Sans-serif';
+	font-size: 10px;
+	color: #000;
+}
+
+
+.VectorManager .vectorDisplay .ruler span, .vectorDisplay .ticks span, .vectorDisplay .vector span{
+	border-left: 1px solid transparent;
+	width: 25px;
+	height: 22px;
+	display: inline-block;
+}
+
+.VectorManager .vectorDisplay .vector span{
+	height: 5px;
+	margin: 5px 0;
+}
+
+.VectorManager .vectorDisplay .vector span.valueIsContained{
+	background-color: #59a;
+}
+
+
+.VectorManager .vectorDisplay .ticks{
+	border-top: 1px solid #888;
+}
+.VectorManager .vectorDisplay .ticks span{
+	height: 5px;
+	border-left: 1px solid #888;
+}
+
+.VectorManager .red {
+	background-color: #f55 !important;
+}
+.VectorManager .green {
+	background-color: #3d3 !important;
+}
+.VectorManager .blue {
+	background-color: #33f !important;
+}
+
+.VectorManager .sidebar{
+	float: left;
+	width: 230px;
+	position: fixed;
+	background-color: #F0F0F0;
+	font-family: Verdana,'Arial','Helvetica','Sans-serif';
+}
+
+.VectorManager .sidebar h1, .sidebar h2{
+	background-color: #E0E0E0;
+	font-size: 20px;
+	font-weight: normal;
+	padding: 5px 10px;
+	margin: 0;
+}
+.VectorManager .sidebar h2 {
+	font-size: 16px;
+	margin: 1px 0;
+}
+
+.VectorManager .sidebar a {
+	text-decoration: none;
+	color: #222;
+}
+
+.VectorManager .sidebar ul{
+	padding: 0 0 0 8px;
+	margin: 0;
+}
+.VectorManager .sidebar li{
+	list-style-type: none;
+	margin: 0;
+	padding: 3px 0;
+	font-size: 12px;
+	color: #515151;
+	border-bottom: 1px solid #fff;
+}
+
+.VectorManager .scrollable{
+	display: block; 
+	height: 450px;
+	overflow: auto;
+}
+
+.VectorManager hr{
+	height: 2px;
+	border: 1px solid #444;
+}
