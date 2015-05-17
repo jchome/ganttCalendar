@@ -255,46 +255,40 @@ $.extend(TimeLineMonth.prototype, {
 
 	},
 	updateOccupation: function(){
-		
-		// Barre des occupations mini
+		var container = this;
+		var resArrayMini, resArrayMaxi;
 		for(var i=0;i<this.resources.groups.length;i++){
 			var group = this.resources.groups[i];
 			if(this.eventsByGroup[group.id] == null){
 				continue;
 			}
+			var divDisplay = $("#group_"+group.id+"_right");
+			
+			// Barre des occupations mini
 			var allEvents = this.eventsByGroup[group.id];
-			var container = this;
 			var allVectors = $.map(allEvents,function(evt){
 				return evt.asVector(container);
 			});
 			
-			var resArray = Vector.mergeContinuous(allVectors);
-			var divDisplay = $("#group_"+group.id+"_right");
-			Vector.flatDisplay(resArray, divDisplay,0,this.getNbDaysInMonth()-1, "occupationLeak");
-		}
+			resArrayMini = Vector.mergeContinuous(allVectors);
+			Vector.flatDisplay(resArrayMini, divDisplay,0,this.getNbDaysInMonth()-1, "occupationLeak");
 		
-		// Barre des occupations maxi
-		for(var i=0;i<this.resources.groups.length;i++){
-			var group = this.resources.groups[i];
-			if(this.eventsByGroup[group.id] == null){
-				continue;
-			}
+		
+			// Barre des occupations maxi
 			var allVectors = Array();
 			for(var j=0;j<group.resources.length;j++){
 				var resource = group.resources[j];
 				var allEventsOfResource = this.eventsByResource[resource.id];
-				var container = this;
 				var allVectorsOfResource = $.map(allEventsOfResource,function(evt){
 					return evt.asVector(container);
 				});
 				allVectors.push(allVectorsOfResource);
 			}
 			
-			var resArray = Vector.intersectAll(allVectors);
-			//console.log(resArray);
-			var divDisplay = $("#group_"+group.id+"_right");
-			Vector.flatDisplay(resArray, divDisplay,0,this.getNbDaysInMonth()-1, "occupationFull");
+			resArrayMaxi = Vector.intersectAll(allVectors);
+			Vector.flatDisplay(resArrayMaxi, divDisplay,0,this.getNbDaysInMonth()-1, "occupationFull");
 		}
+		
 	}
 	
 });
@@ -601,6 +595,9 @@ $.extend(TimeLineWeek.prototype, {
 
 	},
 	updateOccupation: function(){
+		var container = this;
+		var resArrayMini, resArrayMaxi;
+		var nb_steps = 13;
 		
 		// Barre des occupations mini
 		for(var i=0;i<this.resources.groups.length;i++){
@@ -608,39 +605,61 @@ $.extend(TimeLineWeek.prototype, {
 			if(this.eventsByGroup[group.id] == null){
 				continue;
 			}
+			var divDisplay = $("#group_"+group.id+"_right");
+			
+			// Barre des occupations mini
 			var allEvents = this.eventsByGroup[group.id];
-			var container = this;
 			var allVectors = $.map(allEvents,function(evt){
 				return evt.asVector(container);
 			});
 			
-			var resArray = Vector.mergeContinuous(allVectors);
-			var divDisplay = $("#group_"+group.id+"_right");
-			Vector.flatDisplay(resArray, divDisplay,0,13, "occupationLeak");
-		}
-		
-		// Barre des occupations maxi
-		for(var i=0;i<this.resources.groups.length;i++){
-			var group = this.resources.groups[i];
-			if(this.eventsByGroup[group.id] == null){
-				continue;
-			}
+			resArrayMini = Vector.mergeContinuous(allVectors);
+			Vector.flatDisplay(resArrayMini, divDisplay,0,nb_steps, "occupationLeak");
+
+			// Barre des occupations maxi
 			var allVectors = Array();
 			for(var j=0;j<group.resources.length;j++){
 				var resource = group.resources[j];
 				var allEventsOfResource = this.eventsByResource[resource.id];
-				var container = this;
 				var allVectorsOfResource = $.map(allEventsOfResource,function(evt){
 					return evt.asVector(container);
 				});
 				allVectors.push(allVectorsOfResource);
 			}
 			
-			var resArray = Vector.intersectAll(allVectors);
-			//console.log(resArray);
-			var divDisplay = $("#group_"+group.id+"_right");
-			Vector.flatDisplay(resArray, divDisplay,0,13, "occupationFull");
+			resArrayMaxi = Vector.intersectAll(allVectors);
+			Vector.flatDisplay(resArrayMaxi, divDisplay,0,nb_steps, "occupationFull");
 		}
+		
+		// update height of events
+		for(resource_id in this.eventsByResource){
+			//var nb_overlaps_maxi = 0;
+			var allEvents = this.eventsByResource[resource_id];
+			var allVectors = $.map(allEvents,function(evt){
+				return evt.asVector(container);
+			});
+			nb_overlaps_maxi = Vector.countOverlaps(allVectors);
+			// change height of resource's row - left and right side
+			$("#resource_"+resource_id).height( (24 * nb_overlaps_maxi) -3);
+			$("#events_r_"+resource_id).height( (24 * nb_overlaps_maxi) -1);
+			if(nb_overlaps_maxi > 1){
+				var currentLine = 1;
+				var union = allVectors[0];
+				var intersect;
+				for(var v=1;v<allVectors.length;v++){
+					intersect = union.intersection(allVectors[v]);
+					if(intersect.getLength() == 0){
+						continue;
+					}else{
+						// intersection detected
+						console.log(allVectors[v]);
+						$("#"+allEvents[v].eventId).css('top', currentLine * 25+'px');
+						currentLine++;
+					}
+				}
+			}
+		}
+		
 		
 	}
 });

@@ -13,12 +13,12 @@
 <script type="text/javascript" src="js/google-code-prettify/prettify.js"></script>
 
 <!-- Vector -->
-<script src="https://cdn.rawgit.com/jchome/vectorManager/master/js/vectorManager-1.2-min.js" type="text/javascript"></script>
+<script src="https://cdn.rawgit.com/jchome/vectorManager/master/js/vectorManager-1.3-min.js" type="text/javascript"></script>
 <link href="https://cdn.rawgit.com/jchome/vectorManager/master/css/vectorManager.css" rel="stylesheet">
 
 <!-- Calendar -->
 <link href="js/ganttCalendar/css/ganttCalendar.css" media="screen, projection" rel="stylesheet" type="text/css" />
-<script src="js/ganttCalendar/ganttCalendar-1.1-min.js" type="text/javascript"></script>
+<script src="js/ganttCalendar/ganttCalendar-src.js" type="text/javascript"></script>
 
 
 <script type="text/javascript">
@@ -28,8 +28,11 @@ $(function() {
 	
 	var evt1 = new EventCal(1, "event_001", 4, 5, "Event Paris - WSDD");
 	var evt2 = new EventCal(2, "event_002", 5, 7, "Paris - WSDD(2-5)");
+	var evt2_bis = new EventCal(2, "event_002_bis", 4, 6, "Réunion");
 	var evt3 = new EventCal(2, "event_003", 14, 17, "Préparation Evènement");
 	var evt5 = new EventCal(3, "event_005", 9, 11, "Week-end");
+	var evt5_bis = new EventCal(3, "event_005_bis", 8, 9.5, "Réunion");
+	var evt5_ter = new EventCal(3, "event_005_ter", 6.5, 8.5, "Transfert");
 	var evt6 = new EventCal(4, "event_006", 9, 11, "Week-end");
 	var evt7 = new EventCal(5, "event_007", 9, 11, "Week-end");
 	var evt8 = new EventCal(6, "event_008", 9, 11, "Week-end");
@@ -74,7 +77,10 @@ $(function() {
 						case 10:
 							evt1.drawIn(this);
 							evt2.drawIn(this);
+							evt2_bis.drawIn(this);
 							evt5.drawIn(this);
+							evt5_bis.drawIn(this);
+							evt5_ter.drawIn(this);
 							evt6.drawIn(this);
 							evt7.drawIn(this);
 							evt8.drawIn(this);

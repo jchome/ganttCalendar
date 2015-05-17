@@ -63,7 +63,7 @@
 .lineForResource {
 	display: block;
 	clear: both;
-	height: 23px;
+	height: 24px;
 	padding-top: 1px;
 	background-image: url('../img/bg-grid.gif');
 	position: relative;
@@ -561,6 +561,9 @@
 
 .lineForResource{
 	background-color: #f7f7f7;
+}
+.lineForResource:HOVER{
+	background-color: #EDEDED;
 }
 
 
