@@ -551,6 +551,10 @@
 	border: 1px solid #3c95d7;
 	border-top: 1px solid #5EAEEB;
 	overflow: hidden;
+	
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .event:HOVER{
@@ -562,10 +566,13 @@
 .lineForResource{
 	background-color: #f7f7f7;
 }
+
+.lineForResource:nth-of-type(even), .lineResource:nth-of-type(even) {
+	background-color: #EDEDff;
+}
 .lineForResource:HOVER{
 	background-color: #EDEDED;
 }
-
 
 /* #zoomSlider Styles */
 
@@ -619,3 +626,10 @@
 	height: 3px;
 }
 
+.listResources{
+	
+}
+
+.eventsAndGroupContainer{
+	
+}

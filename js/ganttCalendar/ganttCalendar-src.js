@@ -72,6 +72,10 @@ $.extend(TimeLineMonth.prototype, {
 			resource, horizontalCalendarContent, lineOfDays, htmlDays, 
 			indexDay, day2digits;
 
+		// restart new drawings : reinit dictionnaries
+		this.eventsByGroup = {};
+		this.eventsByResource = {};
+		
 		containerObj = $("#"+this.container);
 		containerObj.timeLineMonth = this;
 		
@@ -220,10 +224,6 @@ $.extend(TimeLineMonth.prototype, {
 			};
 		});
 		
-		$(window).resize(function() {
-			$calendarObject.drawElements();
-			$calendarObject.updateMonthCallback();
-		});
 
 	},
 	findGroupHavingResource: function(resourceId){
@@ -359,7 +359,12 @@ $.extend(EventCal.prototype, {
 
 /* TimeLineWeek - VERSION 1.1 */
 TimeLineWeek = function(container, weekNumber, year, resources, updateWeekCallback) {
-	return this.init(container, weekNumber, year, resources, updateWeekCallback);
+	var timeline = this.init(container, weekNumber, year, resources, updateWeekCallback);
+	$(window).resize(function() {
+		timeline.drawElements();
+		timeline.updateWeekCallback();
+	});
+	return timeline;
 };
 
 
@@ -420,6 +425,10 @@ $.extend(TimeLineWeek.prototype, {
 		this.mondayOfWeek = new Date(targetTime);
 		this.sundayOfWeek = new Date(targetTime); 
 		this.sundayOfWeek.setDate(this.mondayOfWeek.getDate() + 6);
+
+		// restart new drawings : reinit dictionnaries
+		this.eventsByGroup = {};
+		this.eventsByResource = {};
 
 		containerObj = $("#"+this.container);
 		containerObj.timeLineMonth = this;
@@ -508,15 +517,19 @@ $.extend(TimeLineWeek.prototype, {
 		
 		// All groups and resources, prepare content
 		firstDayOfWeek = new Date(this.mondayOfWeek.getTime());
+		var eventsAndGroupContainer = $( document.createElement('div') ).addClass("eventsAndGroupContainer")
+		horizontalCalendarContent.append(eventsAndGroupContainer);
+		
 		for(indexGroup=0;indexGroup<this.resources.groups.length;indexGroup++){
 			group = this.resources.groups[indexGroup];
-			horizontalCalendarContent.append("<div id=\"group_"+group.id+"_right"+"\"data-group=\""+group.id+"\" class=\"group_right\">&nbsp;</div>");
+			eventsAndGroupContainer.append("<div id=\"group_"+group.id+"_right"+"\"data-group=\""+group.id+"\" class=\"group_right\">&nbsp;</div>");
 			
 			for(indexResource=0;indexResource<group.resources.length;indexResource++){
 				resource = group.resources[indexResource];
-				horizontalCalendarContent.append("<div class=\"lineForResource grid-"+this.cellWidth+"-offset-"+ 1/*firstDayOfWeek.getDay()*/ +"\" data-resource=\"resource_"+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
+				eventsAndGroupContainer.append("<div class=\"lineForResource grid-"+this.cellWidth+"-offset-"+ 1/*firstDayOfWeek.getDay()*/ +"\" data-resource=\"resource_"+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
 			}
 		}
+		
 		
 		this.defineEvents(this);
 	},
@@ -572,13 +585,10 @@ $.extend(TimeLineWeek.prototype, {
 			};
 		});
 		
-		$(window).resize(function() {
-			$calendarObject.drawElements();
-			$calendarObject.updateWeekCallback();
-		});
 
 	},
 	addEvent: function(anEvent){
+
 		var groupForEvent = this.findGroupHavingResource(anEvent.resourceId);
 		if(groupForEvent == null){
 			alert("Error: Event id="+anEvent.eventId + " has an error. Please check resourceId.");
@@ -633,7 +643,7 @@ $.extend(TimeLineWeek.prototype, {
 		
 		// update height of events
 		for(resource_id in this.eventsByResource){
-			//var nb_overlaps_maxi = 0;
+			var nb_overlaps_maxi = 0;
 			var allEvents = this.eventsByResource[resource_id];
 			var allVectors = $.map(allEvents,function(evt){
 				return evt.asVector(container);
@@ -652,7 +662,6 @@ $.extend(TimeLineWeek.prototype, {
 						continue;
 					}else{
 						// intersection detected
-						//console.log(allVectors[v]);
 						$("#"+allEvents[v].eventId).css('top', currentLine * 25+'px');
 						currentLine++;
 					}
