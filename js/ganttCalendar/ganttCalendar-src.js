@@ -241,7 +241,7 @@ $.extend(TimeLineMonth.prototype, {
 	addEvent: function(anEvent){
 		var groupForEvent = this.findGroupHavingResource(anEvent.resourceId);
 		if(groupForEvent == null){
-			console.log("Error: Event id="+anEvent.eventId + " has an error. Please check resourceId.");
+			alert("Error: Event id="+anEvent.eventId + " has an error. Please check resourceId.");
 		}
 		if( this.eventsByGroup[groupForEvent.id] == null){
 			this.eventsByGroup[groupForEvent.id] = Array();
@@ -581,7 +581,7 @@ $.extend(TimeLineWeek.prototype, {
 	addEvent: function(anEvent){
 		var groupForEvent = this.findGroupHavingResource(anEvent.resourceId);
 		if(groupForEvent == null){
-			console.log("Error: Event id="+anEvent.eventId + " has an error. Please check resourceId.");
+			alert("Error: Event id="+anEvent.eventId + " has an error. Please check resourceId.");
 		}
 		if( this.eventsByGroup[groupForEvent.id] == null){
 			this.eventsByGroup[groupForEvent.id] = Array();
@@ -652,7 +652,7 @@ $.extend(TimeLineWeek.prototype, {
 						continue;
 					}else{
 						// intersection detected
-						console.log(allVectors[v]);
+						//console.log(allVectors[v]);
 						$("#"+allEvents[v].eventId).css('top', currentLine * 25+'px');
 						currentLine++;
 					}
