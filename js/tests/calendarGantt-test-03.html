@@ -47,7 +47,36 @@ $(function() {
 				}]
 			},
 			function(){ // updateWeekCallback()
-				
+				switch(this.year){
+				case 2011:
+					break;
+				case 2013:
+					switch (this.weekNumber) {
+					case 10:
+						(new EventCal(1, "event_001", 4, 5, "Evènement 1")).drawIn(this);
+						(new EventCal(1, "event_002", 4, 5.5, "Evènement 2")).drawIn(this);
+						(new EventCal(2, "event_003", 4, 6, "Evènement 3")).drawIn(this);
+						(new EventCal(2, "event_004", 4, 6.5, "Evènement 4")).drawIn(this);
+						(new EventCal(2, "event_005", 4, 7, "Evènement 5")).drawIn(this);
+						(new EventCal(3, "event_006", 4, 7.5, "Evènement 6")).drawIn(this);
+						(new EventCal(3, "event_007", 4, 8, "Evènement 7")).drawIn(this);
+						(new EventCal(3, "event_008", 4, 8.5, "Evènement 8")).drawIn(this);
+						(new EventCal(3, "event_009", 4, 9, "Evènement 9")).drawIn(this);
+						(new EventCal(4, "event_010", 5, 6, "Evènement 10")).drawIn(this);
+						(new EventCal(4, "event_011", 5, 6.5, "Evènement 11")).drawIn(this);
+						(new EventCal(4, "event_012", 5, 7, "Evènement 12")).drawIn(this);
+						(new EventCal(4, "event_013", 5, 7.5, "Evènement 13")).drawIn(this);
+						(new EventCal(4, "event_014", 5, 8, "Evènement 14")).drawIn(this);
+
+						break;
+
+					default:
+						break;
+					}
+					break;
+				default:
+					break;
+			}
 				this.updateOccupation();
 			}
 	);
@@ -78,10 +107,9 @@ $(function() {
 </head>
 <body>
 <h1>GanttCalendar Test</h1>
-<p>Calendrier vide
+<p>Chevauchement d'évènements
 <br/>
-|
-<a href="calendarGantt-test-02.html">Suite</a>
+<a href="calendarGantt-test-02.html">Précédent</a>
 </p>
 
 <div id="myGanttCalendar">

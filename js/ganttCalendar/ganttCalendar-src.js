@@ -266,7 +266,7 @@ $.extend(TimeLineMonth.prototype, {
 			
 			// Barre des occupations mini
 			var allEvents = this.eventsByGroup[group.id];
-			var allVectors = $.map(allEvents,function(evt){
+			var allVectors = $.map((allEvents || []),function(evt){
 				return evt.asVector(container);
 			});
 			
@@ -279,7 +279,7 @@ $.extend(TimeLineMonth.prototype, {
 			for(var j=0;j<group.resources.length;j++){
 				var resource = group.resources[j];
 				var allEventsOfResource = this.eventsByResource[resource.id];
-				var allVectorsOfResource = $.map(allEventsOfResource,function(evt){
+				var allVectorsOfResource = $.map((allEventsOfResource || []),function(evt){
 					return evt.asVector(container);
 				});
 				allVectors.push(allVectorsOfResource);
@@ -619,7 +619,7 @@ $.extend(TimeLineWeek.prototype, {
 			
 			// Barre des occupations mini
 			var allEvents = this.eventsByGroup[group.id];
-			var allVectors = $.map(allEvents,function(evt){
+			var allVectors = $.map((allEvents || []),function(evt){
 				return evt.asVector(container);
 			});
 			
@@ -631,7 +631,7 @@ $.extend(TimeLineWeek.prototype, {
 			for(var j=0;j<group.resources.length;j++){
 				var resource = group.resources[j];
 				var allEventsOfResource = this.eventsByResource[resource.id];
-				var allVectorsOfResource = $.map(allEventsOfResource,function(evt){
+				var allVectorsOfResource = $.map((allEventsOfResource || []),function(evt){
 					return evt.asVector(container);
 				});
 				allVectors.push(allVectorsOfResource);
@@ -645,13 +645,13 @@ $.extend(TimeLineWeek.prototype, {
 		for(resource_id in this.eventsByResource){
 			var nb_overlaps_maxi = 0;
 			var allEvents = this.eventsByResource[resource_id];
-			var allVectors = $.map(allEvents,function(evt){
+			var allVectors = $.map((allEvents || []),function(evt){
 				return evt.asVector(container);
 			});
 			nb_overlaps_maxi = Vector.countOverlaps(allVectors);
 			// change height of resource's row - left and right side
-			$("#resource_"+resource_id).height( (24 * nb_overlaps_maxi) -3);
-			$("#events_r_"+resource_id).height( (24 * nb_overlaps_maxi) -1);
+			$("#resource_"+resource_id).addClass("overlap_"+nb_overlaps_maxi);
+			$("#events_r_"+resource_id).addClass("overlap_"+nb_overlaps_maxi);
 			if(nb_overlaps_maxi > 1){
 				var currentLine = 1;
 				var union = allVectors[0];
@@ -662,7 +662,7 @@ $.extend(TimeLineWeek.prototype, {
 						continue;
 					}else{
 						// intersection detected
-						$("#"+allEvents[v].eventId).css('top', currentLine * 25+'px');
+						$("#"+allEvents[v].eventId).css('top', (1+(currentLine * 24))+'px');
 						currentLine++;
 					}
 				}

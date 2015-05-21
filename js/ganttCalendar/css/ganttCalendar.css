@@ -51,7 +51,7 @@
 }
 
 .lineResource {
-	height: 21px;
+	height: 22px;
 	padding-top: 3px;
 }
 
@@ -632,4 +632,44 @@
 
 .eventsAndGroupContainer{
 	
+}
+
+/* OVERLAP 1 */
+.lineResource .overlap_1{
+	
+}
+.lineForResource .overlap_1{
+	
+}
+
+/* OVERLAP 2 */
+.eventsAndGroupContainer .overlap_2{
+	height: 46px;
+}
+.listResources .overlap_2{
+	height: 44px;
+}
+
+/* OVERLAP 3 */
+.eventsAndGroupContainer .overlap_3{
+	height: 71px;
+}
+.listResources .overlap_3{
+	height: 69px;
+}
+
+/* OVERLAP 4 */
+.eventsAndGroupContainer .overlap_4{
+	height: 95px;
+}
+.listResources .overlap_4{
+	height: 93px;
+}
+
+/* OVERLAP 5 */
+.eventsAndGroupContainer .overlap_5{
+	height: 119px;
+}
+.listResources .overlap_5{
+	height: 117px;
 }

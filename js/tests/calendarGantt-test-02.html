@@ -47,7 +47,31 @@ $(function() {
 				}]
 			},
 			function(){ // updateWeekCallback()
-				
+				switch(this.year){
+				case 2011:
+					break;
+				case 2013:
+					switch (this.weekNumber) {
+					case 10:
+						(new EventCal(1, "event_001", 4, 5, "Evènement 1")).drawIn(this);
+						(new EventCal(2, "event_002", 4, 5.5, "Evènement 2")).drawIn(this);
+						(new EventCal(3, "event_003", 4, 6, "Evènement 3")).drawIn(this);
+						(new EventCal(4, "event_004", 4, 6.5, "Evènement 4")).drawIn(this);
+						(new EventCal(5, "event_005", 4, 7, "Evènement 5")).drawIn(this);
+						(new EventCal(6, "event_006", 4, 7.5, "Evènement 6")).drawIn(this);
+						(new EventCal(7, "event_007", 4, 8, "Evènement 7")).drawIn(this);
+
+						(new EventCal(101, "event_008", 4, 8.5, "Evènement 8")).drawIn(this);
+						(new EventCal(102, "event_009", 4, 4.5, "Evènement 9 qui a un texte trop long")).drawIn(this);
+						break;
+
+					default:
+						break;
+					}
+					break;
+				default:
+					break;
+			}
 				this.updateOccupation();
 			}
 	);
@@ -78,10 +102,11 @@ $(function() {
 </head>
 <body>
 <h1>GanttCalendar Test</h1>
-<p>Calendrier vide
+<p>pas de chavauchement, calcul de l'occupation, affichage réduit
 <br/>
+<a href="calendarGantt-test-01.html">Précédent</a>
 |
-<a href="calendarGantt-test-02.html">Suite</a>
+<a href="calendarGantt-test-03.html">Suite</a>
 </p>
 
 <div id="myGanttCalendar">
