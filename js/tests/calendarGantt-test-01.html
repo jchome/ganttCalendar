@@ -55,7 +55,7 @@ $(function() {
 	timeline.lang = 'fr';
 	timeline.cellWidth = 150;
 	timeline.drawElements();
-	timeline.updateWeekCallback();
+	timeline.updateCallback();
 	
 	/** 
 	 * Zoom feature
@@ -65,7 +65,7 @@ $(function() {
 		 change: function( event, ui ) { 
 			timeline.cellWidth = ui.value;
 			timeline.drawElements();
-			timeline.updateWeekCallback(); 
+			timeline.updateCallback(); 
 			$("#zoomValue").html(ui.value);
 		 } 
 	 });
