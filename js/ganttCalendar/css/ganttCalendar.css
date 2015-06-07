@@ -638,7 +638,6 @@
 }
 
 .eventsAndGroupContainer{
-	
 }
 
 /* OVERLAP 1 */
@@ -679,4 +678,8 @@
 }
 .listResources .overlap_5{
 	height: 117px;
+}
+
+#headerCalendar{
+	position: absolute;
 }

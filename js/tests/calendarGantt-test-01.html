@@ -58,16 +58,18 @@ $(function() {
 	/** 
 	 * Zoom feature
 	 */
-	 $( "#zoomSlider" ).slider({ min:50, max: 200, step: 50, 
-		 value: timeline.cellWidth, 
-		 change: function( event, ui ) { 
+	$( "#zoomSlider" ).slider({ min:50, max: 200, step: 50, 
+		value: timeline.cellWidth, 
+		change: function( event, ui ) { 
 			timeline.cellWidth = ui.value;
 			timeline.drawElements();
 			timeline.updateCallback(); 
 			$("#zoomValue").html(ui.value);
-		 } 
-	 });
-	 $("#zoomValue").html(timeline.cellWidth);
+		}
+	});
+	$("#zoomValue").html(timeline.cellWidth);
+	
+	
 });
 </script>
 

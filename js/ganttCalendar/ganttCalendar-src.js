@@ -94,7 +94,10 @@ $.extend(TimeLine.prototype, {
 		}
 		return null;
 	},
-	_drawResourcesIn : function(largeCalendar){
+	_drawResourcesIn : function(largeCalendar, onlyHeader){
+		if(onlyHeader == null){
+			onlyHeader = false;
+		}
 		calendarHeaders = $( document.createElement('div') ).addClass("leftColumn horizontalCalendarHeaders");
 		largeCalendar.append(calendarHeaders);
 		headerResources = $( document.createElement('div') ).addClass("headerResources");
@@ -134,6 +137,7 @@ $.extend(TimeLine.prototype, {
 		
 		largeCalendar = $( document.createElement('div') ).addClass("largeCalendar");
 		this.containerObj.html(largeCalendar);
+		
 		return largeCalendar;
 	},
 	_setZoomFeatures: function(largeCalendar, headerResources, eventsContainer){
@@ -272,6 +276,29 @@ $.extend(TimeLine.prototype, {
 		}else{
 			toggleImg.html("&#9654;");
 		}
+	},
+	/**
+	 * Build the header object
+	 */
+	defineHeader : function(){
+		this.header = this.containerObj.clone().attr("id","headerCalendar");
+		this.header.find(".listResources").remove();
+		this.header.find(".eventsAndGroupContainer").remove();
+		this.header.hide();
+		this.containerObj.append(this.header);
+	},
+	updateScrollWindow: function(){
+		var offset = this.containerObj.offset();
+		var scrollTop = $(window).scrollTop();
+		var headerHeight = this.header.height();
+		// check if floating header should be displayed
+		if( scrollTop > offset.top && (scrollTop < offset.top + this.containerObj.height() - headerHeight)) {
+			this.header.show();
+			this.header.css("top", $(window).scrollTop())
+		}
+		else {
+			this.header.hide();
+		}
 	}
 });
 
@@ -346,9 +373,12 @@ $.extend(TimeLineMonth.prototype, {
 		this.defineEvents();
 		this.updateCallback();
 		this.updateOccupation();
+		this.defineHeader();
 		
 	},
-	
+	drawHeaderResources: function(){
+		
+	},
 	goToNextMonth: function(){
 		if(this.month == 12){
 			this.month = 1;
@@ -383,7 +413,7 @@ $.extend(TimeLineMonth.prototype, {
 			calendarObject.goToNextMonth();
 		});
 		
-		$(".horizontalCalendarContent").keydown(function(event) {	   
+		$(".horizontalCalendarContent").keydown(function(event) {
 			switch(event.keyCode) {
 				case 34: // PAGE_DOWN
 					calendarObject.goToPrevMonth();
@@ -400,6 +430,9 @@ $.extend(TimeLineMonth.prototype, {
 
 		$(".group_left").click(function(){
 			calendarObject.closeGroup( $(this).attr("data-group") );
+		});
+		$(window).scroll(function(){
+			calendarObject.updateScrollWindow();
 		});
 	}
 	
@@ -496,6 +529,9 @@ $.extend(TimeLineWeek.prototype, {
 		this.defineEvents();
 		this.updateCallback();
 		this.updateOccupation();
+		
+		this.defineHeader();
+
 	},
 	
 	goToNextWeek: function(){
@@ -549,6 +585,9 @@ $.extend(TimeLineWeek.prototype, {
 
 		$(".group_left").click(function(){
 			calendarObject.closeGroup($(this).attr("data-group"));
+		});
+		$(window).scroll(function(){
+			calendarObject.updateScrollWindow();
 		});
 	}
 });
