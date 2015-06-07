@@ -42,6 +42,13 @@
 	line-height: 6px;
 }
 
+.group_left{
+	cursor: pointer;
+}
+.toggleImg{
+	margin-left: 3px;
+}
+
 .resource{
 	text-align: right;
 	background-color: #e9e9e9;

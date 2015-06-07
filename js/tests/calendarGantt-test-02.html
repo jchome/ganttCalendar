@@ -71,15 +71,13 @@ $(function() {
 					break;
 				default:
 					break;
-			}
-				this.updateOccupation();
+				}
 			}
 	);
 
 	timeline.lang = 'fr';
 	timeline.cellWidth = 150;
 	timeline.drawElements();
-	timeline.updateCallback();
 	
 	/** 
 	 * Zoom feature
@@ -92,8 +90,10 @@ $(function() {
 			timeline.updateCallback(); 
 			$("#zoomValue").html(ui.value);
 		 } 
-	 });
-	 $("#zoomValue").html(timeline.cellWidth);
+	});
+	$("#zoomValue").html(timeline.cellWidth);
+	
+
 });
 </script>
 

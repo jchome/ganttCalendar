@@ -34,6 +34,7 @@ TimeLine = function(container, param_1, year, resources, updateCallback) {
 	$(window).resize(function() {
 		timeline.drawElements();
 		timeline.updateCallback();
+		this.updateOccupation();
 	});
 	return timeline;
 };
@@ -56,7 +57,7 @@ $.extend(TimeLine.prototype, {
 	eventsByResource: {},
 	cellWidth: 20,
 	lang: 'fr',
-	resourcesColumnHeader : 'Resources',
+	resourcesColumnHeader : {'fr' : 'Ressources', 'en': 'Resources'},
 	init: function(container, param_1, year, resources, updateCallback) {
 		this.container = container;
 		this.year = year;
@@ -106,13 +107,17 @@ $.extend(TimeLine.prototype, {
 		// All groups and resources, prepare left side
 		for(indexGroup=0;indexGroup<this.resources.groups.length;indexGroup++){
 			group = this.resources.groups[indexGroup];
-			listResources.append("<div id=\"group_"+group.id+"_left\" class=\"group_left\">\
-					<span class=\"labelLeft\">"+group.name+"</span>\
+			listResources.append("<div id=\"group_"+group.id+"_left\" class=\"group_left\" data-group=\""+group.id+"\">\
+					<span class=\"toggleImg\">&#9660;</span><span class=\"labelLeft\">"+group.name+"</span>\
 				</div>");
+			groupResources = $( document.createElement('div') ).addClass("resourcesForGroup")
+				.attr("id","resourcesForGroup_"+group.id)
+				.data("group",group.id);
+			listResources.append(groupResources);
 			
 			for(indexResource=0;indexResource<group.resources.length;indexResource++){
 				resource = group.resources[indexResource];
-				listResources.append("<div id=\"resource_"+resource.id+"\" data-group=\"group_"+group.id+"\" class=\"resource lineResource\">\
+				groupResources.append("<div id=\"resource_"+resource.id+"\" data-group=\"group_"+group.id+"\" class=\"resource lineResource\">\
 					<span class=\"labelRight\">"+resource.name+"</span>\
 					</div>");
 			}
@@ -155,7 +160,6 @@ $.extend(TimeLine.prototype, {
 		
 	},
 	_drawGridEvents: function(horizontalCalendarContent){
-		
 		// All groups and resources, prepare content
 		var eventsAndGroupContainer = $( document.createElement('div') ).addClass("eventsAndGroupContainer")
 		horizontalCalendarContent.append(eventsAndGroupContainer);
@@ -164,9 +168,14 @@ $.extend(TimeLine.prototype, {
 			group = this.resources.groups[indexGroup];
 			eventsAndGroupContainer.append("<div id=\"group_"+group.id+"_right"+"\"data-group=\""+group.id+"\" class=\"group_right\">&nbsp;</div>");
 			
+			groupResources = $( document.createElement('div') ).addClass("eventsForGroup")
+				.attr("id","eventsForGroup_"+group.id)
+				.data("group",group.id);
+			eventsAndGroupContainer.append(groupResources);
+			
 			for(indexResource=0;indexResource<group.resources.length;indexResource++){
 				resource = group.resources[indexResource];
-				eventsAndGroupContainer.append("<div class=\"lineForResource grid-"+this.cellWidth+"-offset-"+ this.mondayPosition() +"\" data-resource=\"resource_"+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
+				groupResources.append("<div class=\"lineForResource grid-"+this.cellWidth+"-offset-"+ this.mondayPosition() +"\" data-resource=\"resource_"+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
 			}
 		}
 	},
@@ -233,6 +242,7 @@ $.extend(TimeLine.prototype, {
 			// change height of resource's row - left and right side
 			$("#resource_"+resource_id).addClass("overlap_"+nb_overlaps_maxi);
 			$("#events_r_"+resource_id).addClass("overlap_"+nb_overlaps_maxi);
+			//console.log( "ressource "+resource_id);
 			if(nb_overlaps_maxi > 1){
 				var currentLine = 1;
 				var union = allVectors[0];
@@ -244,6 +254,7 @@ $.extend(TimeLine.prototype, {
 					}else{
 						// intersection detected
 						$("#"+allEvents[v].eventId).css('top', (1+(currentLine * 24))+'px');
+						//console.log( (1+(currentLine * 24)) );
 						currentLine++;
 					}
 				}
@@ -251,6 +262,16 @@ $.extend(TimeLine.prototype, {
 		}
 		
 		
+	},
+	closeGroup: function(group_id){
+		$("#resourcesForGroup_"+group_id).animate({height: 'toggle'});
+		$("#eventsForGroup_"+group_id).animate({height: 'toggle'});
+		var toggleImg = $("#group_"+group_id+"_left > .toggleImg");
+		if( $("#resourcesForGroup_"+group_id).css('height') == '1px' ){
+			toggleImg.html("&#9660;");
+		}else{
+			toggleImg.html("&#9654;");
+		}
 	}
 });
 
@@ -301,7 +322,7 @@ $.extend(TimeLineMonth.prototype, {
 		
 		this._setZoomFeatures(largeCalendar, headerResources, eventsContainer);
 		
-		spanLabelCenter = $( document.createElement('span') ).addClass("labelCenter").html(this.resourcesColumnHeader);
+		spanLabelCenter = $( document.createElement('span') ).addClass("labelCenter").html(this.resourcesColumnHeader[this.lang]);
 		headerResources.html(spanLabelCenter);
 		
 		horizontalCalendarContent = $( document.createElement('div') )
@@ -322,7 +343,10 @@ $.extend(TimeLineMonth.prototype, {
 		lineOfDays.html(htmlDays);
 		
 		this._drawGridEvents(horizontalCalendarContent);
-		this.defineEvents(this);
+		this.defineEvents();
+		this.updateCallback();
+		this.updateOccupation();
+		
 	},
 	
 	goToNextMonth: function(){
@@ -333,7 +357,6 @@ $.extend(TimeLineMonth.prototype, {
 			this.month++;
 		}
 		this.drawElements();
-		this.updateCallback();
 	},
 	
 	goToPrevMonth: function(){
@@ -344,36 +367,39 @@ $.extend(TimeLineMonth.prototype, {
 			this.month--;
 		}
 		this.drawElements();
-		this.updateCallback();
 	},
 	
 	updateWidth: function() {
 		$(".eventsContainer").width($(".largeCalendar").width() - $(".headerResources").width() - 1);
 	},
 	
-	defineEvents: function($calendarObject){
-		
+	defineEvents: function(){
+		var calendarObject = this;
 		$(".prevMonth").click(function () {
-			$calendarObject.goToPrevMonth();
+			calendarObject.goToPrevMonth();
 		});
 
 		$(".nextMonth").click(function () {
-			$calendarObject.goToNextMonth();
+			calendarObject.goToNextMonth();
 		});
 		
 		$(".horizontalCalendarContent").keydown(function(event) {	   
 			switch(event.keyCode) {
 				case 34: // PAGE_DOWN
-					$calendarObject.goToPrevMonth();
+					calendarObject.goToPrevMonth();
 					$(".horizontalCalendarContent").focus();
 					break;
 				case 33: //PAGE_UP
-					$calendarObject.goToNextMonth();
+					calendarObject.goToNextMonth();
 					$(".horizontalCalendarContent").focus();
 					break;
 				default:
 					break;
 			};
+		});
+
+		$(".group_left").click(function(){
+			calendarObject.closeGroup( $(this).attr("data-group") );
 		});
 	}
 	
@@ -443,7 +469,7 @@ $.extend(TimeLineWeek.prototype, {
 
 		this._setZoomFeatures(largeCalendar, headerResources, eventsContainer);
 		
-		spanLabelCenter = $( document.createElement('span') ).addClass("labelCenter").html(this.resourcesColumnHeader);
+		spanLabelCenter = $( document.createElement('span') ).addClass("labelCenter").html(this.resourcesColumnHeader[this.lang]);
 		headerResources.html(spanLabelCenter);
 		
 		horizontalCalendarContent = $( document.createElement('div') )
@@ -467,7 +493,9 @@ $.extend(TimeLineWeek.prototype, {
 		lineOfDays.html(htmlDays);
 		
 		this._drawGridEvents(horizontalCalendarContent);
-		this.defineEvents(this);
+		this.defineEvents();
+		this.updateCallback();
+		this.updateOccupation();
 	},
 	
 	goToNextWeek: function(){
@@ -478,7 +506,6 @@ $.extend(TimeLineWeek.prototype, {
 			this.weekNumber++;
 		}
 		this.drawElements();
-		this.updateWeekCallback();
 	},
 	
 	goToPrevWeek: function(){
@@ -489,36 +516,39 @@ $.extend(TimeLineWeek.prototype, {
 			this.weekNumber--;
 		}
 		this.drawElements();
-		this.updateWeekCallback();
 	},
 	
 	updateWidth: function() {
 		$(".eventsContainer").width($(".largeCalendar").width() - $(".headerResources").width() - 1);
 	},
 	
-	defineEvents: function($calendarObject){
-		
+	defineEvents: function(){
+		calendarObject = this;
 		$(".prevWeek").click(function () {
-			$calendarObject.goToPrevWeek();
+			calendarObject.goToPrevWeek();
 		});
 
 		$(".nextWeek").click(function () {
-			$calendarObject.goToNextWeek();
+			calendarObject.goToNextWeek();
 		});
 		
 		$(".horizontalCalendarContent").keydown(function(event) {	   
 			switch(event.keyCode) {
 				case 34: // PAGE_DOWN
-					$calendarObject.goToPrevWeek();
+					calendarObject.goToPrevWeek();
 					$(".horizontalCalendarContent").focus();
 					break;
 				case 33: //PAGE_UP
-					$calendarObject.goToNextWeek();
+					calendarObject.goToNextWeek();
 					$(".horizontalCalendarContent").focus();
 					break;
 				default:
 					break;
 			};
+		});
+
+		$(".group_left").click(function(){
+			calendarObject.closeGroup($(this).attr("data-group"));
 		});
 	}
 });

@@ -90,7 +90,6 @@ $(function() {
 					default:
 						break;
 				}
-				this.updateOccupation();
 			}
 	);
 
@@ -125,8 +124,9 @@ $(function() {
 			timeline.updateMonthCallback(); 
 			$("#zoomValue").html(ui.value);
 		 } 
-	 });
-	 $("#zoomValue").html(timeline.cellWidth);
+	});
+	$("#zoomValue").html(timeline.cellWidth);
+	
 });
 </script>
 
