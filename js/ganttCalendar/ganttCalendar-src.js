@@ -180,6 +180,7 @@ $.extend(TimeLine.prototype, {
 			for(indexResource=0;indexResource<group.resources.length;indexResource++){
 				resource = group.resources[indexResource];
 				groupResources.append("<div class=\"lineForResource grid-"+this.cellWidth+"-offset-"+ this.mondayPosition() +"\" data-resource=\"resource_"+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
+				
 			}
 		}
 	},
@@ -326,7 +327,7 @@ $.extend(TimeLineMonth.prototype, {
 		return this.nbDays();
 	},
 	mondayPosition: function(){
-		return new Date(this.year, this.month -1, 1);
+		return new Date(this.year, this.month -1, 1).getDay();
 	},
 	drawElements: function() {
 		var largeCalendar, monthLine, calendarHeaders, eventsContainer, headerResources, 

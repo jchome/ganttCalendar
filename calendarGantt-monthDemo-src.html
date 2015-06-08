@@ -96,7 +96,6 @@ $(function() {
 	timeline.lang = 'en';
 	timeline.cellWidth = 40;
 	timeline.drawElements();
-	timeline.updateCallback();
 
 	
 	evt1.jObject.mouseover(
@@ -121,7 +120,6 @@ $(function() {
 		 change: function( event, ui ) { 
 			timeline.cellWidth = ui.value;
 			timeline.drawElements();
-			timeline.updateMonthCallback(); 
 			$("#zoomValue").html(ui.value);
 		 } 
 	});
