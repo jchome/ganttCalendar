@@ -23,7 +23,7 @@
 $(function() {
 	
 
-	var timeline = new TimeLineWeek("myGanttCalendar",10, 2013,
+	var timeline = new TimeLineDay("myGanttCalendar",1, 11, 2012,
 			{groups: 
 				[  {name: "Groupe 1",
 					id: 1,
@@ -50,24 +50,23 @@ $(function() {
 				switch(this.year){
 				case 2011:
 					break;
-				case 2013:
-					switch (this.weekNumber) {
-					case 10:
-						(new EventCal(1, "event_001", 4, 5, "Evènement 1")).drawIn(this);
-						(new EventCal(1, "event_002", 4, 5.5, "Evènement 2")).drawIn(this);
-						(new EventCal(2, "event_003", 4, 6, "Evènement 3")).drawIn(this);
-						(new EventCal(2, "event_004", 4, 6.5, "Evènement 4")).drawIn(this);
-						(new EventCal(2, "event_005", 4, 7, "Evènement 5")).drawIn(this);
-						(new EventCal(3, "event_006", 4, 7.5, "Evènement 6")).drawIn(this);
-						(new EventCal(3, "event_007", 4, 8, "Evènement 7")).drawIn(this);
-						(new EventCal(3, "event_008", 4, 8.5, "Evènement 8")).drawIn(this);
-						(new EventCal(3, "event_009", 4, 9, "Evènement 9")).drawIn(this);
-						(new EventCal(4, "event_010", 5, 6, "Evènement 10")).drawIn(this);
-						(new EventCal(4, "event_011", 5, 6.5, "Evènement 11")).drawIn(this);
-						(new EventCal(4, "event_012", 5, 7, "Evènement 12")).drawIn(this);
-						(new EventCal(4, "event_013", 5, 7.5, "Evènement 13")).drawIn(this);
-						(new EventCal(4, "event_014", 5, 8, "Evènement 14")).drawIn(this);
+				case 2012:
+					switch (this.month) {
+					case 11:
+						switch (this.day){
+						case 1:
+							(new EventCal(1, "event_001", 9, 10, "Evènement 1")).drawIn(this);
+							(new EventCal(2, "event_002", 9, 10.5, "Evènement 2")).drawIn(this);
+							(new EventCal(3, "event_003", 9, 11, "Evènement 3")).drawIn(this);
+							(new EventCal(4, "event_004", 9, 11.5, "Evènement 4")).drawIn(this);
+							(new EventCal(5, "event_005", 9, 12, "Evènement 5")).drawIn(this);
+							(new EventCal(6, "event_006", 9, 12.5, "Evènement 6")).drawIn(this);
+							(new EventCal(7, "event_007", 9, 13, "Evènement 7")).drawIn(this);
 
+							(new EventCal(101, "event_008", 10, 13.25, "Evènement 8")).drawIn(this);
+							(new EventCal(102, "event_009", 10, 13.45, "Evènement 9 qui a un texte trop long")).drawIn(this);
+						}
+						
 						break;
 
 					default:
@@ -76,27 +75,28 @@ $(function() {
 					break;
 				default:
 					break;
+				}
 			}
-		}
 	);
 
 	timeline.lang = 'fr';
-	timeline.cellWidth = 150;
+	timeline.cellWidth = 100;
 	timeline.drawElements();
 	
 	/** 
 	 * Zoom feature
 	 */
-	 $( "#zoomSlider" ).slider({ min:50, max: 200, step: 50, 
+	$( "#zoomSlider" ).slider({ min:50, max: 200, step: 50, 
 		 value: timeline.cellWidth, 
 		 change: function( event, ui ) { 
 			timeline.cellWidth = ui.value;
 			timeline.drawElements();
-			timeline.updateCallback(); 
 			$("#zoomValue").html(ui.value);
 		 } 
-	 });
-	 $("#zoomValue").html(timeline.cellWidth);
+	});
+	$("#zoomValue").html(timeline.cellWidth);
+	
+	
 });
 </script>
 
@@ -105,11 +105,11 @@ $(function() {
 </head>
 <body>
 <h1>GanttCalendar Test</h1>
-<p>Calendrier Hebdo, chevauchement d'évènements
+<p>Calendrier quotidien, pas de chavauchement, calcul de l'occupation, affichage réduit
 <br/>
-<a href="calendarGantt-test-02.html">Précédent</a>
+<a href="calendarGantt-test-07.html">Précédent</a>
 |
-<a href="calendarGantt-test-04.html">Suite</a>
+<a href="calendarGantt-test-09.html">Suite</a>
 </p>
 
 <div id="myGanttCalendar">

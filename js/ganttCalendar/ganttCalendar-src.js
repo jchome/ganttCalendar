@@ -58,13 +58,15 @@ $.extend(TimeLine.prototype, {
 	cellWidth: 20,
 	lang: 'fr',
 	resourcesColumnHeader : {'fr' : 'Ressources', 'en': 'Resources'},
-	init: function(container, param_1, year, resources, updateCallback) {
+	_superInit: function(container, year, resources, updateCallback){
 		this.container = container;
 		this.year = year;
 		this.resources = resources;
 		this.updateCallback = updateCallback || function(){};
+	},
+	init: function(container, param_1, year, resources, updateCallback) {
+		this._superInit(container, year, resources, updateCallback)
 		this.sub_init(param_1);
-		
 		return this;
 	},
 	sub_init: function(param_1){
@@ -179,7 +181,7 @@ $.extend(TimeLine.prototype, {
 			
 			for(indexResource=0;indexResource<group.resources.length;indexResource++){
 				resource = group.resources[indexResource];
-				groupResources.append("<div class=\"lineForResource grid-"+this.cellWidth+"-offset-"+ this.mondayPosition() +"\" data-resource=\"resource_"+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
+				groupResources.append("<div class=\"lineForResource grid-"+this.cellWidth+" offset-"+ this.offset() +"\" data-resource=\"resource_"+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
 				
 			}
 		}
@@ -324,9 +326,10 @@ $.extend(TimeLineMonth.prototype, {
 	},
 	nbSteps: function(){
 		// 1 step par jour
-		return this.nbDays();
+		return this.nbDays()-1;
 	},
-	mondayPosition: function(){
+	offset: function(){
+		// décalage pour l'image de fond
 		return new Date(this.year, this.month -1, 1).getDay();
 	},
 	drawElements: function() {
@@ -375,9 +378,6 @@ $.extend(TimeLineMonth.prototype, {
 		this.updateCallback();
 		this.updateOccupation();
 		this.defineHeader();
-		
-	},
-	drawHeaderResources: function(){
 		
 	},
 	goToNextMonth: function(){
@@ -471,7 +471,8 @@ $.extend(TimeLineWeek.prototype, {
 		// 7 jours, 2 demies-journée par jour: de 0 à 13
 		return 13;
 	},
-	mondayPosition: function(){
+	offset: function(){
+		// décalage pour l'image de fond
 		// démarre le lundi
 		return new Date(this.mondayOfWeek.getTime()).getDay();
 	},
@@ -593,6 +594,182 @@ $.extend(TimeLineWeek.prototype, {
 	}
 });
 
+
+/* TimeLineDay - VERSION 1.0 */
+
+TimeLineDay = function(container, day, month, year, resources, updateCallback) {
+	return this.init(container, day, month, year, resources, updateCallback);
+};
+TimeLineDay.prototype = Object.create(TimeLineMonth.prototype);
+
+$.extend(TimeLineDay.prototype, {
+	// object variables
+	TimeLineClass: 'DAY',
+	
+	init: function(container, day, month, year, resources, updateCallback) {
+		this._superInit(container, year, resources, updateCallback)
+		this.sub_init(day, month);
+		return this;
+	},
+	sub_init: function(day, month){
+		this.day = day;
+		this.month = month;
+	},
+	nbHours : function(){
+		return 12;
+	},
+	startHour: function(){
+		return 8;
+	},
+	nbSteps: function(){
+		return this.nbHours()-1;
+	},
+	offset: function(){
+		// décalage pour l'image de fond
+		return this.startHour();
+	},
+	_setZoomFeatures: function(largeCalendar, headerResources, eventsContainer){
+		// //
+		// ZOOM FEATURES -- BEGIN
+		// //
+		// update the size of eventsContainer to match with borders
+		// set the default size for calculations
+		this.containerObj.width( $("body").outerWidth() - 1);
+		var nbHours = this.nbHours();
+		if(this.cellWidth*nbHours+ headerResources.width() + 3 < this.containerObj.width()){
+			this.containerObj.width(this.cellWidth*nbHours + headerResources.width() + 3);
+		}
+
+		var widthForcontainer = largeCalendar.width() - headerResources.width() - 1;
+		if( this.cellWidth*nbHours < widthForcontainer){
+			widthForcontainer = this.cellWidth*nbHours;
+		}
+		
+		eventsContainer.width(widthForcontainer);
+		// //
+		// ZOOM FEATURES -- END
+		// //
+		
+	},
+	drawElements: function() {
+		
+		var largeCalendar, dayLine, calendarHeaders, eventsContainer, headerResources, 
+			spanLabelCenter, listResources, indexGroup, group, indexResource,
+			resource, horizontalCalendarContent, lineOfDays, htmlDays, 
+			indexDay, day2digits;
+
+		var largeCalendar = this._prepareDrawings();
+		
+		dayLine = $( document.createElement('div') ).addClass("day");
+		largeCalendar.html(dayLine);
+		jsDate = new Date(this.year, this.month -1, this.day);
+		dayLine.html("<div class=\"prevDay\" title=\"[Page down] Go to Previous day\"></div>\
+			<div class=\"nameDay\">"+this.weekDays[this.lang][jsDate.getDay()]+
+			" "+this.day + " " + this.months[this.lang][this.month-1]+" "+this.year+"</div>\
+			<div class=\"nextDay\" id=\"nextDay\" title=\"[Page up] Go to next day\"></div>");
+		
+		var headerResources = this._drawResourcesIn(largeCalendar);
+
+		eventsContainer = $( document.createElement('div') ).addClass("eventsContainer hourContainer container-grid-"+this.cellWidth);
+		largeCalendar.append(eventsContainer);
+		
+		this._setZoomFeatures(largeCalendar, headerResources, eventsContainer);
+		
+		spanLabelCenter = $( document.createElement('span') ).addClass("labelCenter").html(this.resourcesColumnHeader[this.lang]);
+		headerResources.html(spanLabelCenter);
+		
+		horizontalCalendarContent = $( document.createElement('div') )
+			.addClass("horizontalCalendarContent for"+ this.nbHours() +"hours")
+			.attr("tabindex", "0");
+		eventsContainer.append(horizontalCalendarContent);
+		
+		lineOfHours = $( document.createElement('div') ).addClass("lineOfHours");
+		horizontalCalendarContent.html(lineOfHours);
+		
+		htmlHours = "";
+		for(indexHour=this.startHour();indexHour<this.nbHours()+this.startHour();indexHour++){
+			hour2digits = (indexHour<10)?("0"+indexHour):(indexHour);
+			htmlHours += "<div class=\"hour hourOrder_"+hour2digits+"\" id=\"hour_"+hour2digits+"\">"+
+				hour2digits+"h</div>";
+		}
+		lineOfHours.html(htmlHours);
+		
+		this._drawGridEvents(horizontalCalendarContent);
+		this.defineEvents();
+		this.updateCallback();
+		this.updateOccupation();
+		this.defineHeader();
+	},
+	
+	defineEvents: function(){
+		var calendarObject = this;
+		$(".prevDay").click(function () {
+			calendarObject.goToPrevDay();
+		});
+
+		$(".nextDay").click(function () {
+			calendarObject.goToNextDay();
+		});
+		
+		$(".horizontalCalendarContent").keydown(function(event) {
+			switch(event.keyCode) {
+				case 34: // PAGE_DOWN
+					calendarObject.goToPrevDay();
+					$(".horizontalCalendarContent").focus();
+					break;
+				case 33: //PAGE_UP
+					calendarObject.goToNextDay();
+					$(".horizontalCalendarContent").focus();
+					break;
+				default:
+					break;
+			};
+		});
+
+		$(".group_left").click(function(){
+			calendarObject.closeGroup( $(this).attr("data-group") );
+		});
+		$(window).scroll(function(){
+			calendarObject.updateScrollWindow();
+		});
+	},
+	goToNextDay: function(){
+		this.day++;
+		var bisextile = ( (this.year%4==0 && this.year%100!=0) || this.year%400==0 )?(1):(0);
+		if(this.day > this.days[this.month][bisextile]){
+			this.day = 1
+			if(this.month == 12){
+				this.month = 1;
+				this.year++;
+			} else{
+				this.month++;
+			}
+		}
+		this.drawElements();
+	},
+	
+	goToPrevDay: function(){
+		this.day--;
+		var bisextile = ( (this.year%4==0 && this.year%100!=0) || this.year%400==0 )?(1):(0);
+		if(this.day == 0){
+			if(this.month == 1){
+				this.month = 12;
+				this.year--;
+			} else{
+				this.month--;
+			}
+			this.day = this.days[this.month][bisextile];
+		}
+		
+		this.drawElements();
+	}
+
+});
+
+
+
+
+
 EventCal = function(resourceId, eventId, startDay, endDay, label) {
 	this.init(resourceId, eventId, startDay, endDay, label);
 };
@@ -625,6 +802,11 @@ $.extend(EventCal.prototype, {
 			newEndDay = this.endDay - containerObject.mondayOfWeek.getDate();
 			margin = containerObject.cellWidth * (newStartDay);
 			width = containerObject.cellWidth * (newEndDay - newStartDay) - 3;
+		}else if(containerObject.TimeLineClass == 'DAY'){
+			var newStartHour = this.startDay - containerObject.startHour();
+			var newEndHour = this.endDay - containerObject.startHour();
+			margin = containerObject.cellWidth * (newStartHour);
+			width = containerObject.cellWidth * (newEndHour - newStartHour) - 3;
 		}
 		containerObject.addEvent(this);
 		
@@ -651,7 +833,12 @@ $.extend(EventCal.prototype, {
 			newStartDay = this.startDay - containerObject.mondayOfWeek.getDate();
 			newEndDay = this.endDay - containerObject.mondayOfWeek.getDate();
 			period = new Vector(newStartDay*2,(newEndDay-newStartDay)*2);
+		}else if(containerObject.TimeLineClass == 'DAY'){
+			newStartDay = this.startDay - containerObject.startHour();
+			newEndDay = this.endDay - containerObject.startHour();
+			period = new Vector(newStartDay,(newEndDay-newStartDay));
 		}
 		return period;
 	}
 });
+
