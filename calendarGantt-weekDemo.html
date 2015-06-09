@@ -109,14 +109,12 @@ $(function() {
 					default:
 						break;
 				}
-				this.updateOccupation();
 			}
 	);
 
 	timeline.lang = 'fr';
 	timeline.cellWidth = 150;
 	timeline.drawElements();
-	timeline.updateCallback();
 
 	
 	evt1.jObject.mouseover(
@@ -140,7 +138,6 @@ $(function() {
 		 change: function( event, ui ) { 
 			timeline.cellWidth = ui.value;
 			timeline.drawElements();
-			timeline.updateWeekCallback(); 
 			$("#zoomValue").html(ui.value);
 		 } 
 	 });
@@ -159,7 +156,7 @@ $(function() {
 |
 <a href="calendarGantt-monthDemo.html">Calendrier Mensuel</a>
 |
-<a href="js/tests/calendarGantt-test-01.html">Tests du calendrier hebdo</a>
+<a href="js/tests/calendarGantt-test-01.html">Tests des calendriers</a>
 </p>
 
 <div id="myGanttCalendar">
