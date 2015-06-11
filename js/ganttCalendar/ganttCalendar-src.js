@@ -40,24 +40,23 @@ TimeLine = function(container, param_1, year, resources, updateCallback) {
 };
 
 $.extend(TimeLine.prototype, {
-	// object variables
 	TimeLineClass: null,
 	container:'',
 	year: '',
+	lang: 'fr', // langue par défaut
 	weekDays: {'fr':["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"],
 		'en':["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
-	},
-	days: {1:[31,31],2:[28,29],3:[31,31],4:[30,30],5:[31,31],6:[30,30],
-		7:[31,31],8:[31,31],9:[30,30],10:[31,31],11:[30,30],12:[31,31]
 	},
 	months: {'fr':["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Décembre"],
 		'en':["January", "February", "March", "April", "May", "June", "July", "Agust", "September", "October", "November", "December"]
 	},
+	resourcesColumnHeader : {'fr' : 'Ressources', 'en': 'Resources'},
+	days: {1:[31,31],2:[28,29],3:[31,31],4:[30,30],5:[31,31],6:[30,30],
+		7:[31,31],8:[31,31],9:[30,30],10:[31,31],11:[30,30],12:[31,31]
+	},
 	eventsByGroup: {},
 	eventsByResource: {},
 	cellWidth: 20,
-	lang: 'fr',
-	resourcesColumnHeader : {'fr' : 'Ressources', 'en': 'Resources'},
 	_superInit: function(container, year, resources, updateCallback){
 		this.container = container;
 		this.year = year;
@@ -287,21 +286,65 @@ $.extend(TimeLine.prototype, {
 		this.header = this.containerObj.clone().attr("id","headerCalendar");
 		this.header.find(".listResources").remove();
 		this.header.find(".eventsAndGroupContainer").remove();
+		this.header.find(".eventsContainer").removeClass("y-scroll").addClass("no-scroll");
 		this.header.hide();
 		this.containerObj.append(this.header);
 	},
 	updateScrollWindow: function(){
 		var offset = this.containerObj.offset();
 		var scrollTop = $(window).scrollTop();
+		var scrollLeft = $(".y-scroll").scrollLeft();
 		var headerHeight = this.header.height();
 		// check if floating header should be displayed
 		if( scrollTop > offset.top && (scrollTop < offset.top + this.containerObj.height() - headerHeight)) {
 			this.header.show();
 			this.header.css("top", $(window).scrollTop())
+			$(".no-scroll").scrollLeft( scrollLeft );
 		}
 		else {
 			this.header.hide();
 		}
+	},
+	sub_defineEvents: function(){
+		// TO OVERRIDE
+	},
+	defineEvents: function(){
+		var calendarObject = this;
+		$(".prev").click(function () {
+			calendarObject.goToPrev();
+			calendarObject.updateScrollWindow();
+		});
+
+		$(".next").click(function () {
+			calendarObject.goToNext();
+			calendarObject.updateScrollWindow();
+		});
+		
+		$(".horizontalCalendarContent").keydown(function(event) {
+			switch(event.keyCode) {
+				case 34: // PAGE_DOWN
+					calendarObject.goToPrev();
+					$(".horizontalCalendarContent").focus();
+					break;
+				case 33: //PAGE_UP
+					calendarObject.goToNext();
+					$(".horizontalCalendarContent").focus();
+					break;
+				default:
+					break;
+			};
+		});
+
+		$(".group_left").click(function(){
+			calendarObject.closeGroup( $(this).attr("data-group") );
+		});
+		$(window).scroll(function(){
+			calendarObject.updateScrollWindow();
+		});
+		$(".y-scroll").scroll(function(){
+			$(".no-scroll").scrollLeft( $(this).scrollLeft() );
+		});
+		this.sub_defineEvents();
 	}
 });
 
@@ -342,13 +385,13 @@ $.extend(TimeLineMonth.prototype, {
 		
 		monthLine = $( document.createElement('div') ).addClass("month");
 		largeCalendar.html(monthLine);
-		monthLine.html("<div class=\"prevMonth\" title=\"[Page down] Go to Previous month\"></div>\
+		monthLine.html("<div class=\"prev\" title=\"[Page down] Go to Previous month\"></div>\
 		<div class=\"nameMonth\">"+this.months[this.lang][this.month-1]+" "+this.year+"</div>\
-		<div class=\"nextMonth\" id=\"nextMonth\" title=\"[Page up] Go to next month\"></div>");
+		<div class=\"next\" title=\"[Page up] Go to next month\"></div>");
 		
 		var headerResources = this._drawResourcesIn(largeCalendar);
 
-		eventsContainer = $( document.createElement('div') ).addClass("eventsContainer container-grid-"+this.cellWidth);
+		eventsContainer = $( document.createElement('div') ).addClass("eventsContainer y-scroll container-grid-"+this.cellWidth);
 		largeCalendar.append(eventsContainer);
 		
 		this._setZoomFeatures(largeCalendar, headerResources, eventsContainer);
@@ -374,13 +417,13 @@ $.extend(TimeLineMonth.prototype, {
 		lineOfDays.html(htmlDays);
 		
 		this._drawGridEvents(horizontalCalendarContent);
+		this.defineHeader();
 		this.defineEvents();
 		this.updateCallback();
 		this.updateOccupation();
-		this.defineHeader();
 		
 	},
-	goToNextMonth: function(){
+	goToNext: function(){
 		if(this.month == 12){
 			this.month = 1;
 			this.year++;
@@ -390,7 +433,7 @@ $.extend(TimeLineMonth.prototype, {
 		this.drawElements();
 	},
 	
-	goToPrevMonth: function(){
+	goToPrev: function(){
 		if(this.month == 1){
 			this.month = 12;
 			this.year--;
@@ -404,37 +447,8 @@ $.extend(TimeLineMonth.prototype, {
 		$(".eventsContainer").width($(".largeCalendar").width() - $(".headerResources").width() - 1);
 	},
 	
-	defineEvents: function(){
-		var calendarObject = this;
-		$(".prevMonth").click(function () {
-			calendarObject.goToPrevMonth();
-		});
-
-		$(".nextMonth").click(function () {
-			calendarObject.goToNextMonth();
-		});
-		
-		$(".horizontalCalendarContent").keydown(function(event) {
-			switch(event.keyCode) {
-				case 34: // PAGE_DOWN
-					calendarObject.goToPrevMonth();
-					$(".horizontalCalendarContent").focus();
-					break;
-				case 33: //PAGE_UP
-					calendarObject.goToNextMonth();
-					$(".horizontalCalendarContent").focus();
-					break;
-				default:
-					break;
-			};
-		});
-
-		$(".group_left").click(function(){
-			calendarObject.closeGroup( $(this).attr("data-group") );
-		});
-		$(window).scroll(function(){
-			calendarObject.updateScrollWindow();
-		});
+	sub_defineEvents: function(){
+		// ne rien faire de plus
 	}
 	
 });
@@ -493,13 +507,13 @@ $.extend(TimeLineWeek.prototype, {
 		
 		weekLine = $( document.createElement('div') ).addClass("week");
 		largeCalendar.html(weekLine);
-		weekLine.html("<div class=\"prevWeek\" title=\"[Page down] Go to Previous week\"></div>\
+		weekLine.html("<div class=\"prev\" title=\"[Page down] Go to Previous week\"></div>\
 		<div class=\"nameWeek\"> "+this.dateFormat() +"</div>\
-		<div class=\"nextWeek\" id=\"nextWeek\" title=\"[Page up] Go to next week\"></div>");
+		<div class=\"next\" title=\"[Page up] Go to next week\"></div>");
 		
 		var headerResources = this._drawResourcesIn(largeCalendar);
 		
-		eventsContainer = $( document.createElement('div') ).addClass("eventsContainer container-grid-"+this.cellWidth+" forWeek");
+		eventsContainer = $( document.createElement('div') ).addClass("eventsContainer y-scroll container-grid-"+this.cellWidth+" forWeek");
 		largeCalendar.append(eventsContainer);
 
 		this._setZoomFeatures(largeCalendar, headerResources, eventsContainer);
@@ -528,15 +542,13 @@ $.extend(TimeLineWeek.prototype, {
 		lineOfDays.html(htmlDays);
 		
 		this._drawGridEvents(horizontalCalendarContent);
+		this.defineHeader();
 		this.defineEvents();
 		this.updateCallback();
 		this.updateOccupation();
-		
-		this.defineHeader();
-
 	},
 	
-	goToNextWeek: function(){
+	goToNext: function(){
 		if(this.weekNumber == 52){
 			this.weekNumber = 1;
 			this.year++;
@@ -546,7 +558,7 @@ $.extend(TimeLineWeek.prototype, {
 		this.drawElements();
 	},
 	
-	goToPrevWeek: function(){
+	goToPrev: function(){
 		if(this.weekNumber == 1){
 			this.weekNumber = 52;
 			this.year--;
@@ -560,38 +572,10 @@ $.extend(TimeLineWeek.prototype, {
 		$(".eventsContainer").width($(".largeCalendar").width() - $(".headerResources").width() - 1);
 	},
 	
-	defineEvents: function(){
-		calendarObject = this;
-		$(".prevWeek").click(function () {
-			calendarObject.goToPrevWeek();
-		});
-
-		$(".nextWeek").click(function () {
-			calendarObject.goToNextWeek();
-		});
-		
-		$(".horizontalCalendarContent").keydown(function(event) {	   
-			switch(event.keyCode) {
-				case 34: // PAGE_DOWN
-					calendarObject.goToPrevWeek();
-					$(".horizontalCalendarContent").focus();
-					break;
-				case 33: //PAGE_UP
-					calendarObject.goToNextWeek();
-					$(".horizontalCalendarContent").focus();
-					break;
-				default:
-					break;
-			};
-		});
-
-		$(".group_left").click(function(){
-			calendarObject.closeGroup($(this).attr("data-group"));
-		});
-		$(window).scroll(function(){
-			calendarObject.updateScrollWindow();
-		});
+	sub_defineEvents: function(){
+		// ne rien faire de plus
 	}
+	
 });
 
 
@@ -663,14 +647,14 @@ $.extend(TimeLineDay.prototype, {
 		dayLine = $( document.createElement('div') ).addClass("day");
 		largeCalendar.html(dayLine);
 		jsDate = new Date(this.year, this.month -1, this.day);
-		dayLine.html("<div class=\"prevDay\" title=\"[Page down] Go to Previous day\"></div>\
+		dayLine.html("<div class=\"prev\" title=\"[Page down] Go to Previous day\"></div>\
 			<div class=\"nameDay\">"+this.weekDays[this.lang][jsDate.getDay()]+
 			" "+this.day + " " + this.months[this.lang][this.month-1]+" "+this.year+"</div>\
-			<div class=\"nextDay\" id=\"nextDay\" title=\"[Page up] Go to next day\"></div>");
+			<div class=\"next\" title=\"[Page up] Go to next day\"></div>");
 		
 		var headerResources = this._drawResourcesIn(largeCalendar);
 
-		eventsContainer = $( document.createElement('div') ).addClass("eventsContainer hourContainer container-grid-"+this.cellWidth);
+		eventsContainer = $( document.createElement('div') ).addClass("eventsContainer y-scroll hourContainer container-grid-"+this.cellWidth);
 		largeCalendar.append(eventsContainer);
 		
 		this._setZoomFeatures(largeCalendar, headerResources, eventsContainer);
@@ -695,45 +679,16 @@ $.extend(TimeLineDay.prototype, {
 		lineOfHours.html(htmlHours);
 		
 		this._drawGridEvents(horizontalCalendarContent);
+		this.defineHeader();
 		this.defineEvents();
 		this.updateCallback();
 		this.updateOccupation();
-		this.defineHeader();
 	},
-	
-	defineEvents: function(){
-		var calendarObject = this;
-		$(".prevDay").click(function () {
-			calendarObject.goToPrevDay();
-		});
 
-		$(".nextDay").click(function () {
-			calendarObject.goToNextDay();
-		});
-		
-		$(".horizontalCalendarContent").keydown(function(event) {
-			switch(event.keyCode) {
-				case 34: // PAGE_DOWN
-					calendarObject.goToPrevDay();
-					$(".horizontalCalendarContent").focus();
-					break;
-				case 33: //PAGE_UP
-					calendarObject.goToNextDay();
-					$(".horizontalCalendarContent").focus();
-					break;
-				default:
-					break;
-			};
-		});
-
-		$(".group_left").click(function(){
-			calendarObject.closeGroup( $(this).attr("data-group") );
-		});
-		$(window).scroll(function(){
-			calendarObject.updateScrollWindow();
-		});
+	sub_defineEvents: function(){
+		// ne rien faire de plus
 	},
-	goToNextDay: function(){
+	goToNext: function(){
 		this.day++;
 		var bisextile = ( (this.year%4==0 && this.year%100!=0) || this.year%400==0 )?(1):(0);
 		if(this.day > this.days[this.month][bisextile]){
@@ -748,7 +703,7 @@ $.extend(TimeLineDay.prototype, {
 		this.drawElements();
 	},
 	
-	goToPrevDay: function(){
+	goToPrev: function(){
 		this.day--;
 		var bisextile = ( (this.year%4==0 && this.year%100!=0) || this.year%400==0 )?(1):(0);
 		if(this.day == 0){

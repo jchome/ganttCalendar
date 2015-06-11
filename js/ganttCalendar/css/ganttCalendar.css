@@ -15,8 +15,6 @@
 }
 .eventsContainer{
 	width: 300px;
-	overflow:auto;
-	/*float: right;*/
 }
 
 
@@ -431,7 +429,7 @@
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4a4a53', endColorstr='#33333a',GradientType=0 ); /* IE6-9 */
 }
 
-.month .prevMonth, .week .prevWeek, .day .prevDay {
+.month .prev, .week .prev, .day .prev {
 	float: left;
 	background-image: url('../img/button-inset-left.png');
 	background-repeat: no-repeat;
@@ -443,13 +441,13 @@
 	cursor: pointer;
 }
 
-.month .prevMonth:HOVER, .month .nextMonth:HOVER, 
-.week .prevWeek:HOVER, .week .nextWeek:HOVER,
-.day .prevDay:HOVER, .day .nextDay:HOVER {
+.month .prev:HOVER, .month .next:HOVER, 
+.week .prev:HOVER, .week .next:HOVER,
+.day .prev:HOVER, .day .next:HOVER {
 	background-position: 0 -17px;
 }
 
-.month .nextMonth, .week .nextWeek, .day .nextDay {
+.month .next, .week .next, .day .next {
 	float: right;
 	background-image: url('../img/button-inset-right.png');
 	background-repeat: no-repeat;
@@ -558,8 +556,8 @@
 	border-top-color: #0A81D0;
 	text-shadow: 0 1px 0 #003D68;
 	color: #FFFFFF;
-    padding: 4px 8px;
-    font-size: 14px;
+	padding: 4px 8px;
+	font-size: 14px;
 	
 	background: #7abcff; /* Old browsers */
 	background: -moz-linear-gradient(top,  #7abcff 0%, #4c88c4 44%, #2b66a0 100%); /* FF3.6+ */
@@ -733,4 +731,12 @@
 
 #headerCalendar{
 	position: absolute;
+}
+
+.y-scroll{
+	overflow:auto;
+}
+
+.no-scroll{
+	overflow: hidden;
 }
