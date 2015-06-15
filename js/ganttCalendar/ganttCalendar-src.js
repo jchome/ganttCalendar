@@ -128,10 +128,12 @@ $.extend(TimeLine.prototype, {
 		}
 		return headerResources;
 	},
-	_prepareDrawings: function(){
-		// restart new drawings : reinit dictionnaries
-		this.eventsByGroup = {};
-		this.eventsByResource = {};
+	_prepareDrawings: function(emptyEvents){
+		if(emptyEvents){
+			// restart new drawings : reinit dictionnaries
+			this.eventsByGroup = {};
+			this.eventsByResource = {};
+		}
 
 		this.containerObj = $("#"+this.container);
 		this.containerObj.timeLineMonth = this;
@@ -168,7 +170,8 @@ $.extend(TimeLine.prototype, {
 		// All groups and resources, prepare content
 		var eventsAndGroupContainer = $( document.createElement('div') ).addClass("eventsAndGroupContainer")
 		horizontalCalendarContent.append(eventsAndGroupContainer);
-
+		var containerObject = this;
+		
 		for(indexGroup=0;indexGroup<this.resources.groups.length;indexGroup++){
 			group = this.resources.groups[indexGroup];
 			eventsAndGroupContainer.append("<div id=\"group_"+group.id+"_right"+"\"data-group=\""+group.id+"\" class=\"group_right\">&nbsp;</div>");
@@ -180,10 +183,61 @@ $.extend(TimeLine.prototype, {
 			
 			for(indexResource=0;indexResource<group.resources.length;indexResource++){
 				resource = group.resources[indexResource];
-				groupResources.append("<div class=\"lineForResource grid-"+this.cellWidth+" offset-"+ this.offset() +"\" data-resource=\"resource_"+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
+				groupResources.append("<div class=\"lineForResource grid-"+this.cellWidth+" offset-"+ this.offset() +"\" data-resource=\""+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
+				
+				groupResources.find("#events_r_"+resource.id).droppable({
+					drop: function(event, ui){
+						var newResource = $(event.target).attr("data-resource");
+						var eventCalDropped = window["GANTTCALENDAR_DRAG"];
+						delete(window["GANTTCALENDAR_DRAG"]);
+						
+						old_resource_id = eventCalDropped.resourceId;
+						new_resource_id = parseInt(newResource);
+						
+						// calcule la nouvelle position
+						var containerLeft, eventLeft, newDayStart;
+						containerLeft = $(this).offset().left;
+						eventLeft = ui.offset.left;
+						newDayStart = (1 + ((eventLeft - containerLeft) / containerObject.cellWidth) ); // px
+						if(containerObject.TimeLineClass == 'DAY'){
+							newDayStart = (newDayStart - 1 + containerObject.startHour())
+						}
+						eventLength = eventCalDropped.endDay - eventCalDropped.startDay
+						
+						
+						if(event.ctrlKey){
+							// copie d'un nouvel évènement
+							console.log("copie d'un nouvel évènement");
+							// deep clone
+							var newEventCal = jQuery.extend(true, {}, eventCalDropped);
+							newEventCal.resourceId = new_resource_id
+							eventCalDropped.startDay = newDayStart;
+							eventCalDropped.endDay = newDayStart + eventLength;
+							var result = eventCalDropped.copyHandler(newEventCal, eventCalDropped);
+							if(result != false){
+								newEventCal.drawIn(containerObject);
+							}
+						} else {
+							// changement de ressource ou de position
+							console.log("Changement de ressource ou de position");
+							var result = eventCalDropped.moveHandler(eventCalDropped, new_resource_id, newDayStart);
+							if(result != false){
+								eventCalDropped.startDay = newDayStart;
+								eventCalDropped.endDay = newDayStart + eventLength;
+								eventCalDropped.resourceId = new_resource_id;
+								// mettre à jour le container
+								containerObject.updateEvent(old_resource_id, eventCalDropped);
+							}
+						}
+						
+						containerObject.drawElements(false); // without callback
+						
+					}
+				});
 				
 			}
 		}
+		
 	},
 	addEvent: function(anEvent){
 		var groupForEvent = this.findGroupHavingResource(anEvent.resourceId);
@@ -200,6 +254,26 @@ $.extend(TimeLine.prototype, {
 		}
 		this.eventsByResource[anEvent.resourceId].push(anEvent);
 	},
+	updateEvent: function(old_resource_id, anEvent){
+		// suppression dans this.eventsByResource
+		for(var i=0;i<this.eventsByResource[old_resource_id].length;i++){
+			if(this.eventsByResource[old_resource_id][i].eventId == anEvent.eventId){
+				this.eventsByResource[old_resource_id].splice(i, 1);
+				break;
+			}
+		}
+		// suppression dans this.eventsByGroup
+		var groupForEvent = this.findGroupHavingResource(old_resource_id);
+		for(var i=0;i<this.eventsByGroup[groupForEvent.id].length;i++){
+			if(this.eventsByGroup[groupForEvent.id][i].eventId == anEvent.eventId){
+				this.eventsByGroup[groupForEvent.id].splice(i, 1);
+				break;
+			}
+		}
+		
+		this.addEvent(anEvent);
+		
+	},
 	updateOccupation: function(){
 		var container = this;
 		var resArrayMini, resArrayMaxi;
@@ -212,6 +286,11 @@ $.extend(TimeLine.prototype, {
 				continue;
 			}
 			var divDisplay = $("#group_"+group.id+"_right");
+			
+			// suppression de l'ancienne base
+			if( divDisplay.find(".vectorDisplay.occupationLeak") ){
+				divDisplay.find(".vectorDisplay.occupationLeak").remove();
+			}
 			
 			// Barre des occupations mini
 			var allEvents = this.eventsByGroup[group.id];
@@ -233,6 +312,11 @@ $.extend(TimeLine.prototype, {
 				allVectors.push(allVectorsOfResource);
 			}
 			
+			// suppression de l'ancienne base
+			if( divDisplay.find(".vectorDisplay.occupationFull") ){
+				divDisplay.find(".vectorDisplay.occupationFull").remove();
+			}
+			
 			resArrayMaxi = Vector.intersectAll(allVectors);
 			Vector.flatDisplay(resArrayMaxi, divDisplay,0,nb_steps, "occupationFull");
 		}
@@ -245,25 +329,21 @@ $.extend(TimeLine.prototype, {
 				return evt.asVector(container);
 			});
 			nb_overlaps_maxi = Vector.countOverlaps(allVectors);
+			$("#resource_"+resource_id).removeClass("overlap_1 overlap_2 overlap_3 overlap_4 overlap_5 overlap_6");
+			$("#events_r_"+resource_id).removeClass("overlap_1 overlap_2 overlap_3 overlap_4 overlap_5 overlap_6");
 			// change height of resource's row - left and right side
 			$("#resource_"+resource_id).addClass("overlap_"+nb_overlaps_maxi);
 			$("#events_r_"+resource_id).addClass("overlap_"+nb_overlaps_maxi);
-			//console.log( "ressource "+resource_id);
-			if(nb_overlaps_maxi > 1){
-				var currentLine = 1;
-				var union = allVectors[0];
-				var intersect;
-				for(var v=1;v<allVectors.length;v++){
-					intersect = union.intersection(allVectors[v]);
-					if(intersect.getLength() == 0){
-						continue;
-					}else{
-						// intersection detected
-						$("#"+allEvents[v].eventId).css('top', (1+(currentLine * 24))+'px');
-						//console.log( (1+(currentLine * 24)) );
-						currentLine++;
-					}
+			var union = allVectors[0];
+			var intersect;
+			var currentLine = 0;
+			for(var v=1;v<allVectors.length;v++){
+				intersect = union.intersection(allVectors[v]);
+				if(intersect.getLength() != 0){
+					// intersection detected
+					currentLine++;
 				}
+				$("#"+allEvents[v].eventId).css('top', (1+(currentLine * 24))+'px');
 			}
 		}
 		
@@ -375,13 +455,13 @@ $.extend(TimeLineMonth.prototype, {
 		// décalage pour l'image de fond
 		return new Date(this.year, this.month -1, 1).getDay();
 	},
-	drawElements: function() {
+	drawElements: function(withCallback) {
 		var largeCalendar, monthLine, calendarHeaders, eventsContainer, headerResources, 
 			spanLabelCenter, listResources, indexGroup, group, indexResource,
 			resource, horizontalCalendarContent, lineOfDays, htmlDays, 
 			indexDay, day2digits;
 
-		var largeCalendar = this._prepareDrawings();
+		var largeCalendar = this._prepareDrawings(withCallback);
 		
 		monthLine = $( document.createElement('div') ).addClass("month");
 		largeCalendar.html(monthLine);
@@ -419,7 +499,22 @@ $.extend(TimeLineMonth.prototype, {
 		this._drawGridEvents(horizontalCalendarContent);
 		this.defineHeader();
 		this.defineEvents();
-		this.updateCallback();
+		if(withCallback == null || withCallback == true){
+			// utiliser le callback pour définir les évènements
+			this.updateCallback();
+		}else{
+			// utiliser les définitions des évènements déjà enregistrées
+			for(var i=0;i<this.resources.groups.length;i++){
+				var group = this.resources.groups[i];
+				if(this.eventsByGroup[group.id] == null){
+					continue;
+				}
+				for(var j=0;j<this.eventsByGroup[group.id].length;j++){
+					var eventCal = this.eventsByGroup[group.id][j];
+					eventCal.defineHTMLCompontentsAndJSEvents(this);
+				}
+			}
+		}
 		this.updateOccupation();
 		
 	},
@@ -490,7 +585,7 @@ $.extend(TimeLineWeek.prototype, {
 		// démarre le lundi
 		return new Date(this.mondayOfWeek.getTime()).getDay();
 	},
-	drawElements: function() {
+	drawElements: function(withCallback) {
 		var largeCalendar, weekLine, calendarHeaders, eventsContainer, headerResources, 
 			spanLabelCenter, listResources, indexGroup, group, indexResource,
 			resource, horizontalCalendarContent, lineOfDays, htmlDays, 
@@ -502,7 +597,7 @@ $.extend(TimeLineWeek.prototype, {
 		this.sundayOfWeek = new Date(targetTime); 
 		this.sundayOfWeek.setDate(this.mondayOfWeek.getDate() + 6);
 
-		var largeCalendar = this._prepareDrawings();
+		var largeCalendar = this._prepareDrawings(withCallback);
 		
 		
 		weekLine = $( document.createElement('div') ).addClass("week");
@@ -544,7 +639,22 @@ $.extend(TimeLineWeek.prototype, {
 		this._drawGridEvents(horizontalCalendarContent);
 		this.defineHeader();
 		this.defineEvents();
-		this.updateCallback();
+		if(withCallback == null || withCallback == true){
+			// utiliser le callback pour définir les évènements
+			this.updateCallback();
+		}else{
+			// utiliser les définitions des évènements déjà enregistrées
+			for(var i=0;i<this.resources.groups.length;i++){
+				var group = this.resources.groups[i];
+				if(this.eventsByGroup[group.id] == null){
+					continue;
+				}
+				for(var j=0;j<this.eventsByGroup[group.id].length;j++){
+					var eventCal = this.eventsByGroup[group.id][j];
+					eventCal.defineHTMLCompontentsAndJSEvents(this);
+				}
+			}
+		}
 		this.updateOccupation();
 	},
 	
@@ -613,9 +723,6 @@ $.extend(TimeLineDay.prototype, {
 		return this.startHour();
 	},
 	_setZoomFeatures: function(largeCalendar, headerResources, eventsContainer){
-		// //
-		// ZOOM FEATURES -- BEGIN
-		// //
 		// update the size of eventsContainer to match with borders
 		// set the default size for calculations
 		this.containerObj.width( $("body").outerWidth() - 1);
@@ -630,19 +737,15 @@ $.extend(TimeLineDay.prototype, {
 		}
 		
 		eventsContainer.width(widthForcontainer);
-		// //
-		// ZOOM FEATURES -- END
-		// //
-		
 	},
-	drawElements: function() {
+	drawElements: function(withCallback) {
 		
 		var largeCalendar, dayLine, calendarHeaders, eventsContainer, headerResources, 
 			spanLabelCenter, listResources, indexGroup, group, indexResource,
 			resource, horizontalCalendarContent, lineOfDays, htmlDays, 
 			indexDay, day2digits;
 
-		var largeCalendar = this._prepareDrawings();
+		var largeCalendar = this._prepareDrawings(withCallback);
 		
 		dayLine = $( document.createElement('div') ).addClass("day");
 		largeCalendar.html(dayLine);
@@ -681,7 +784,22 @@ $.extend(TimeLineDay.prototype, {
 		this._drawGridEvents(horizontalCalendarContent);
 		this.defineHeader();
 		this.defineEvents();
-		this.updateCallback();
+		if(withCallback == null || withCallback == true){
+			// utiliser le callback pour définir les évènements
+			this.updateCallback();
+		}else{
+			// utiliser les définitions des évènements déjà enregistrées
+			for(var i=0;i<this.resources.groups.length;i++){
+				var group = this.resources.groups[i];
+				if(this.eventsByGroup[group.id] == null){
+					continue;
+				}
+				for(var j=0;j<this.eventsByGroup[group.id].length;j++){
+					var eventCal = this.eventsByGroup[group.id][j];
+					eventCal.defineHTMLCompontentsAndJSEvents(this);
+				}
+			}
+		}
 		this.updateOccupation();
 	},
 
@@ -737,7 +855,18 @@ $.extend(EventCal.prototype, {
 	endDay: '',
 	label: '',
 	jObject: null,
-	
+	moveHandler: function(eventCal, newResourceId, newStart){ 
+		//alert("Moved to resource id="+ newResourceId+ ", start = " + newStart );
+		return true;
+	},
+	copyHandler: function(newEventCal, oldEventCal){
+		newEventCal.eventId = oldEventCal.eventId+1;
+		//alert("Copied to resource id="+ newResourceId+ ", start = " + newStart );
+		return true;
+	},
+	clickHandler: function(eventCal){ 
+		//alert("clicked on event id = "+  eventCal.eventId );
+	},
 	init: function(resourceId, eventId, startDay, endDay, label) {
 		this.resourceId = resourceId;
 		this.eventId = eventId;
@@ -745,9 +874,9 @@ $.extend(EventCal.prototype, {
 		this.endDay = endDay;
 		this.label = label;
 	},
-
-	drawIn: function(containerObject) {
+	defineHTMLCompontentsAndJSEvents: function(containerObject){
 		var margin=0, width=0, newStartDay, newEndDay;
+		var $this = this;
 		containerId = containerObject.container;
 		if(containerObject.TimeLineClass ==  'MONTH'){
 			margin = containerObject.cellWidth * (this.startDay - 1);
@@ -763,20 +892,31 @@ $.extend(EventCal.prototype, {
 			margin = containerObject.cellWidth * (newStartHour);
 			width = containerObject.cellWidth * (newEndHour - newStartHour) - 3;
 		}
-		containerObject.addEvent(this);
-		
 		$("#"+containerId).find("#events_r_"+this.resourceId).append('<div id="'+this.eventId+'" class="event" style="left: '+margin+'px;width:'+width+'px;">'+this.label+'</div>');
 		this.jObject = $("#"+this.eventId);
-		$("#"+containerId).find("#"+this.eventId).draggable({ axis: "x", containment: "parent", opacity: 0.5, snap: true });
-		$("#"+containerId).find("#events_r_"+this.resourceId).droppable({
-			drop: function(event, ui){
-				var containerLeft, eventLeft, newDayStart;
-				containerLeft = $(this).offset().left;
-				eventLeft = ui.offset.left;
-				newDayStart = 1 + ((eventLeft - containerLeft) / containerObject.cellWidth); // px
-				$(".debug").html("newDayStart: "+  newDayStart );
+		$("#"+containerId).find("#"+this.eventId).draggable({ 
+			containment: 'DOM',
+			revert: 'invalid',
+			zIndex: 999,
+			opacity: 0.5, 
+			snap: true,
+			start: function(event, ui) {
+				window["GANTTCALENDAR_DRAG"] = $this;
 			}
 		});
+		$("#"+containerId).find("#"+this.eventId).click(function(){
+			$this.clickHandler($this);
+		});
+		return this;
+		
+	},
+	drawIn: function(containerObject, onClickHandler, onMoveHandler, onCopyHandler) {
+		containerObject.addEvent(this);
+		
+		this.moveHandler = onMoveHandler || this.moveHandler;
+		this.copyHandler = onCopyHandler || this.copyHandler;
+		this.clickHandler = onClickHandler || this.clickHandler;
+		this.defineHTMLCompontentsAndJSEvents(containerObject);
 		return this;
 	},
 	
