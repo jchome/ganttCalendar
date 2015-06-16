@@ -83,6 +83,9 @@ $.extend(TimeLine.prototype, {
 		// to override
 		return 0;
 	},
+	clickResource: function(resource_id, startEvent){
+		console.log(resource_id + " / " + startEvent);
+	},
 	findGroupHavingResource: function(resourceId){
 		for(var i=0;i<this.resources.groups.length;i++){
 			var group = this.resources.groups[i];
@@ -187,6 +190,10 @@ $.extend(TimeLine.prototype, {
 				
 				groupResources.find("#events_r_"+resource.id).droppable({
 					drop: function(event, ui){
+						var grid_x = containerObject.cellWidth;
+						if(containerObject.TimeLineClass == 'DAY' || containerObject.TimeLineClass == 'WEEK'){
+							grid_x = containerObject.cellWidth/2;
+						}
 						var newResource = $(event.target).attr("data-resource");
 						var eventCalDropped = window["GANTTCALENDAR_DRAG"];
 						delete(window["GANTTCALENDAR_DRAG"]);
@@ -198,16 +205,15 @@ $.extend(TimeLine.prototype, {
 						var containerLeft, eventLeft, newDayStart;
 						containerLeft = $(this).offset().left;
 						eventLeft = ui.offset.left;
-						newDayStart = (1 + ((eventLeft - containerLeft) / containerObject.cellWidth) ); // px
+						newDayStart = (1 + ((Math.round((eventLeft - containerLeft)/grid_x)*grid_x) / containerObject.cellWidth) ); // px
 						if(containerObject.TimeLineClass == 'DAY'){
-							newDayStart = (newDayStart - 1 + containerObject.startHour())
+							newDayStart = newDayStart - 1 + containerObject.startHour();
 						}
 						eventLength = eventCalDropped.endDay - eventCalDropped.startDay
 						
 						
 						if(event.ctrlKey){
 							// copie d'un nouvel évènement
-							console.log("copie d'un nouvel évènement");
 							// deep clone
 							var newEventCal = jQuery.extend(true, {}, eventCalDropped);
 							newEventCal.resourceId = new_resource_id
@@ -219,7 +225,6 @@ $.extend(TimeLine.prototype, {
 							}
 						} else {
 							// changement de ressource ou de position
-							console.log("Changement de ressource ou de position");
 							var result = eventCalDropped.moveHandler(eventCalDropped, new_resource_id, newDayStart);
 							if(result != false){
 								eventCalDropped.startDay = newDayStart;
@@ -233,6 +238,17 @@ $.extend(TimeLine.prototype, {
 						containerObject.drawElements(false); // without callback
 						
 					}
+				});
+				
+				groupResources.find("#events_r_"+resource.id).click(function(event){
+					var resourceId = $(event.target).attr("data-resource");
+					var clickPosition = event.pageX - $(this).offset().left;
+					var grid_x = containerObject.cellWidth;
+					if(containerObject.TimeLineClass == 'DAY' || containerObject.TimeLineClass == 'WEEK'){
+						grid_x = containerObject.cellWidth/2;
+					}
+					var clickStart = ((Math.round(clickPosition/grid_x)*grid_x) / containerObject.cellWidth)
+					containerObject.clickResource(parseInt(resourceId), clickStart);
 				});
 				
 			}
@@ -867,6 +883,9 @@ $.extend(EventCal.prototype, {
 	clickHandler: function(eventCal){ 
 		//alert("clicked on event id = "+  eventCal.eventId );
 	},
+	resizeHandler: function(eventCal, start, length){
+		return true;
+	},
 	init: function(resourceId, eventId, startDay, endDay, label) {
 		this.resourceId = resourceId;
 		this.eventId = eventId;
@@ -907,15 +926,37 @@ $.extend(EventCal.prototype, {
 		$("#"+containerId).find("#"+this.eventId).click(function(){
 			$this.clickHandler($this);
 		});
+		
+		var grid_x = containerObject.cellWidth;
+		if(containerObject.TimeLineClass == 'DAY' || containerObject.TimeLineClass == 'WEEK'){
+			grid_x = containerObject.cellWidth/2;
+		}
+		$("#"+containerId).find("#"+this.eventId).resizable({
+			handles: "e, w",
+			grid: [grid_x, 9999],
+			stop: function( event, ui ) {
+				var length = (Math.round(ui.size.width/grid_x)*grid_x) / containerObject.cellWidth;
+				var start = (Math.round(ui.position.left/grid_x)*grid_x) / containerObject.cellWidth;
+				var result = $this.resizeHandler($this, start, length);
+				if(result) {
+					if(containerObject.TimeLineClass == 'DAY'){
+						$this.startDay = start + containerObject.startHour();
+					}
+					$this.endDay = $this.startDay + length;
+				}
+				containerObject.drawElements(false);
+			}
+		});
 		return this;
 		
 	},
-	drawIn: function(containerObject, onClickHandler, onMoveHandler, onCopyHandler) {
+	drawIn: function(containerObject, onClickHandler, onMoveHandler, onCopyHandler, onResizeHandler) {
 		containerObject.addEvent(this);
 		
 		this.moveHandler = onMoveHandler || this.moveHandler;
 		this.copyHandler = onCopyHandler || this.copyHandler;
 		this.clickHandler = onClickHandler || this.clickHandler;
+		this.resizeHandler = onResizeHandler || this.resizeHandler;
 		this.defineHTMLCompontentsAndJSEvents(containerObject);
 		return this;
 	},
