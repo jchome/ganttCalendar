@@ -338,7 +338,7 @@ $.extend(TimeLine.prototype, {
 			Vector.flatDisplay(resArrayMaxi, divDisplay,0,nb_steps, "occupationFull");
 		}
 		
-		// update height of events
+		// mise à jour de la hauteur des ressources
 		for(resource_id in this.eventsByResource){
 			var nb_overlaps_maxi = 0;
 			var allEvents = this.eventsByResource[resource_id];
@@ -352,15 +352,36 @@ $.extend(TimeLine.prototype, {
 			$("#resource_"+resource_id).addClass("overlap_"+nb_overlaps_maxi);
 			$("#events_r_"+resource_id).addClass("overlap_"+nb_overlaps_maxi);
 			var union = allVectors[0];
-			var intersect;
-			var currentLine = 0;
-			for(var v=1;v<allVectors.length;v++){
-				intersect = union.intersection(allVectors[v]);
-				if(intersect.getLength() != 0){
-					// intersection detected
+			allVectors[0].displayOnLine = 0;
+			// le premier est à la ligne 0
+			var gridOfVect = {0:[ allVectors[0] ]};
+			currentVectLoop: for(var currentVect=1;currentVect<allVectors.length;currentVect++){
+				var v1 = allVectors[currentVect];
+				// compare entre les vecteurs déjà passés
+				linesLoop: for(currentLine in gridOfVect){
+					compareVectLoop: for(compareVect in gridOfVect[currentLine]){
+						var intersection = false;
+						var v2 = gridOfVect[currentLine][compareVect];
+						var intersect = v2.intersection(v1);
+						if(intersect.getLength() != 0){
+							// intersection detected
+							intersection = true;
+							continue linesLoop;
+						}
+					}
+					if(!intersection){
+						break linesLoop;
+					}
+				}
+				if(intersection){
 					currentLine++;
 				}
-				$("#"+allEvents[v].eventId).css('top', (1+(currentLine * 24))+'px');
+				if( gridOfVect[currentLine] == null){
+					gridOfVect[currentLine] = Array();
+				}
+				gridOfVect[currentLine].push(allVectors[currentVect]);
+				
+				$("#"+allEvents[currentVect].eventId).css('top', (1+(currentLine * 24))+'px');
 			}
 		}
 		
