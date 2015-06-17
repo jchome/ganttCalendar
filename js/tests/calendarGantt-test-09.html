@@ -82,6 +82,9 @@ $(function() {
 	timeline.lang = 'fr';
 	timeline.cellWidth = 100;
 	timeline.drawElements();
+	timeline.clickResource = function(resource_id, startEvent){
+		alert("Click dans la ressource id="+resource_id+"\n"+startEvent);
+	};
 	
 	/** 
 	 * Zoom feature

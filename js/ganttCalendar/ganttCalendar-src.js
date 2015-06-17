@@ -79,12 +79,12 @@ $.extend(TimeLine.prototype, {
 		// to override
 		return 0;
 	},
-	firstDay: function(){
+	firstStep: function(){
 		// to override
-		return 0;
+		return 1;
 	},
 	clickResource: function(resource_id, startEvent){
-		console.log(resource_id + " / " + startEvent);
+		console.log("click dans le vide sur la ressource id=" +resource_id + " / début de l'evt:" + startEvent);
 	},
 	findGroupHavingResource: function(resourceId){
 		for(var i=0;i<this.resources.groups.length;i++){
@@ -206,8 +206,8 @@ $.extend(TimeLine.prototype, {
 						containerLeft = $(this).offset().left;
 						eventLeft = ui.offset.left;
 						newDayStart = (1 + ((Math.round((eventLeft - containerLeft)/grid_x)*grid_x) / containerObject.cellWidth) ); // px
-						if(containerObject.TimeLineClass == 'DAY'){
-							newDayStart = newDayStart - 1 + containerObject.startHour();
+						if(containerObject.TimeLineClass == 'DAY' || containerObject.TimeLineClass == 'WEEK'){
+							newDayStart = newDayStart - 1 + containerObject.firstStep();
 						}
 						eventLength = eventCalDropped.endDay - eventCalDropped.startDay
 						
@@ -247,7 +247,8 @@ $.extend(TimeLine.prototype, {
 					if(containerObject.TimeLineClass == 'DAY' || containerObject.TimeLineClass == 'WEEK'){
 						grid_x = containerObject.cellWidth/2;
 					}
-					var clickStart = ((Math.round(clickPosition/grid_x)*grid_x) / containerObject.cellWidth)
+					var clickStart = ((Math.round(clickPosition/grid_x)*grid_x) / containerObject.cellWidth);
+					clickStart = clickStart + 
 					containerObject.clickResource(parseInt(resourceId), clickStart);
 				});
 				
@@ -467,6 +468,10 @@ $.extend(TimeLineMonth.prototype, {
 		// 1 step par jour
 		return this.nbDays()-1;
 	},
+	firstStep: function(){
+		// commence le 1er du mois
+		return 1;
+	},
 	offset: function(){
 		// décalage pour l'image de fond
 		return new Date(this.year, this.month -1, 1).getDay();
@@ -596,9 +601,13 @@ $.extend(TimeLineWeek.prototype, {
 		// 7 jours, 2 demies-journée par jour: de 0 à 13
 		return 13;
 	},
+	firstStep: function(){
+		// jour du lundi dans le mois
+		return new Date(this.mondayOfWeek.getTime()).getDate();
+	},
 	offset: function(){
 		// décalage pour l'image de fond
-		// démarre le lundi
+		// démarre le 1 jour de la semaine : le lundi
 		return new Date(this.mondayOfWeek.getTime()).getDay();
 	},
 	drawElements: function(withCallback) {
@@ -728,7 +737,8 @@ $.extend(TimeLineDay.prototype, {
 	nbHours : function(){
 		return 12;
 	},
-	startHour: function(){
+	firstStep: function(){
+		// commence à 08h00
 		return 8;
 	},
 	nbSteps: function(){
@@ -736,7 +746,8 @@ $.extend(TimeLineDay.prototype, {
 	},
 	offset: function(){
 		// décalage pour l'image de fond
-		return this.startHour();
+		// décalage en fonction de la première heure
+		return this.firstStep();
 	},
 	_setZoomFeatures: function(largeCalendar, headerResources, eventsContainer){
 		// update the size of eventsContainer to match with borders
@@ -790,7 +801,7 @@ $.extend(TimeLineDay.prototype, {
 		horizontalCalendarContent.html(lineOfHours);
 		
 		htmlHours = "";
-		for(indexHour=this.startHour();indexHour<this.nbHours()+this.startHour();indexHour++){
+		for(indexHour=this.firstStep();indexHour<this.nbHours()+this.firstStep();indexHour++){
 			hour2digits = (indexHour<10)?("0"+indexHour):(indexHour);
 			htmlHours += "<div class=\"hour hourOrder_"+hour2digits+"\" id=\"hour_"+hour2digits+"\">"+
 				hour2digits+"h</div>";
@@ -876,14 +887,22 @@ $.extend(EventCal.prototype, {
 		return true;
 	},
 	copyHandler: function(newEventCal, oldEventCal){
+		if(console){
+			console.log("Copie de l'evt="+oldEventCal.resourceId);
+		}
 		newEventCal.eventId = oldEventCal.eventId+1;
-		//alert("Copied to resource id="+ newResourceId+ ", start = " + newStart );
+		newEventCal.label = oldEventCal.label + " - Copie";
 		return true;
 	},
-	clickHandler: function(eventCal){ 
-		//alert("clicked on event id = "+  eventCal.eventId );
+	clickHandler: function(event,eventCal){
+		if(console){
+			console.log("click sur la ressource id="+eventCal.resourceId);
+		}
 	},
 	resizeHandler: function(eventCal, start, length){
+		if(console){
+			console.log("Resize de l'evt \""+eventCal.label+"\"");
+		}
 		return true;
 	},
 	init: function(resourceId, eventId, startDay, endDay, label) {
@@ -906,8 +925,8 @@ $.extend(EventCal.prototype, {
 			margin = containerObject.cellWidth * (newStartDay);
 			width = containerObject.cellWidth * (newEndDay - newStartDay) - 3;
 		}else if(containerObject.TimeLineClass == 'DAY'){
-			var newStartHour = this.startDay - containerObject.startHour();
-			var newEndHour = this.endDay - containerObject.startHour();
+			var newStartHour = this.startDay - containerObject.firstStep();
+			var newEndHour = this.endDay - containerObject.firstStep();
 			margin = containerObject.cellWidth * (newStartHour);
 			width = containerObject.cellWidth * (newEndHour - newStartHour) - 3;
 		}
@@ -923,8 +942,10 @@ $.extend(EventCal.prototype, {
 				window["GANTTCALENDAR_DRAG"] = $this;
 			}
 		});
-		$("#"+containerId).find("#"+this.eventId).click(function(){
-			$this.clickHandler($this);
+		$("#"+containerId).find("#"+this.eventId).click(function(event){
+			event.preventDefault();
+			$this.clickHandler(event, $this);
+			return false;
 		});
 		
 		var grid_x = containerObject.cellWidth;
@@ -939,9 +960,7 @@ $.extend(EventCal.prototype, {
 				var start = (Math.round(ui.position.left/grid_x)*grid_x) / containerObject.cellWidth;
 				var result = $this.resizeHandler($this, start, length);
 				if(result) {
-					if(containerObject.TimeLineClass == 'DAY'){
-						$this.startDay = start + containerObject.startHour();
-					}
+					$this.startDay = start + containerObject.firstStep();
 					$this.endDay = $this.startDay + length;
 				}
 				containerObject.drawElements(false);
@@ -970,8 +989,8 @@ $.extend(EventCal.prototype, {
 			newEndDay = this.endDay - containerObject.mondayOfWeek.getDate();
 			period = new Vector(newStartDay*2,(newEndDay-newStartDay)*2);
 		}else if(containerObject.TimeLineClass == 'DAY'){
-			newStartDay = this.startDay - containerObject.startHour();
-			newEndDay = this.endDay - containerObject.startHour();
+			newStartDay = this.startDay - containerObject.firstStep();
+			newEndDay = this.endDay - containerObject.firstStep();
 			period = new Vector(newStartDay,(newEndDay-newStartDay));
 		}
 		return period;
