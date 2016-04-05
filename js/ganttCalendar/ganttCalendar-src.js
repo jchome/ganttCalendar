@@ -184,10 +184,12 @@ $.extend(TimeLine.prototype, {
 				.data("group",group.id);
 			eventsAndGroupContainer.append(groupResources);
 			
+			// ajoute les lignes des evenents pour chaque ressource : .lineForResource
 			for(indexResource=0;indexResource<group.resources.length;indexResource++){
 				resource = group.resources[indexResource];
 				groupResources.append("<div class=\"lineForResource grid-"+this.cellWidth+" offset-"+ this.offset() +"\" data-resource=\""+resource.id+"\" id=\"events_r_"+resource.id+"\"></div>");
 				
+				// evenement JS : drop
 				groupResources.find("#events_r_"+resource.id).droppable({
 					drop: function(event, ui){
 						var grid_x = containerObject.cellWidth;
@@ -240,6 +242,7 @@ $.extend(TimeLine.prototype, {
 					}
 				});
 				
+				// evenement JS : click
 				groupResources.find("#events_r_"+resource.id).click(function(event){
 					var resourceId = $(event.target).attr("data-resource");
 					var clickPosition = event.pageX - $(this).offset().left;
@@ -261,29 +264,40 @@ $.extend(TimeLine.prototype, {
 		if(groupForEvent == null){
 			alert("Error: Event id="+anEvent.eventId + " has an error. Please check resourceId.");
 		}
+		// si premier evt pour le groupe
 		if( this.eventsByGroup[groupForEvent.id] == null){
 			this.eventsByGroup[groupForEvent.id] = Array();
 		}
-		this.eventsByGroup[groupForEvent.id].push(anEvent);
+		// si l'evt n'est pas déjà présent
+		if( this.eventsByGroup[groupForEvent.id][anEvent.eventId] == null ){
+			this.eventsByGroup[groupForEvent.id][anEvent.eventId] = anEvent;
+		}
 		
+		// si premier evt pour la ressource
 		if( this.eventsByResource[anEvent.resourceId] == null){
 			this.eventsByResource[anEvent.resourceId] = Array();
 		}
-		this.eventsByResource[anEvent.resourceId].push(anEvent);
+		// si l'evt n'est pas déjà présent
+		if( this.eventsByResource[anEvent.resourceId][anEvent.eventId] == null ){
+			this.eventsByResource[anEvent.resourceId][anEvent.eventId] = anEvent;
+		}
+		
 	},
 	updateEvent: function(old_resource_id, anEvent){
 		// suppression dans this.eventsByResource
-		for(var i=0;i<this.eventsByResource[old_resource_id].length;i++){
-			if(this.eventsByResource[old_resource_id][i].eventId == anEvent.eventId){
-				this.eventsByResource[old_resource_id].splice(i, 1);
+		for(eventId in this.eventsByResource[old_resource_id]){
+			if(eventId == anEvent.eventId){
+				// supprimer cet evènement
+				delete this.eventsByResource[old_resource_id][eventId];
 				break;
 			}
 		}
 		// suppression dans this.eventsByGroup
 		var groupForEvent = this.findGroupHavingResource(old_resource_id);
-		for(var i=0;i<this.eventsByGroup[groupForEvent.id].length;i++){
-			if(this.eventsByGroup[groupForEvent.id][i].eventId == anEvent.eventId){
-				this.eventsByGroup[groupForEvent.id].splice(i, 1);
+		for(eventId in this.eventsByGroup[groupForEvent.id]){
+			if(eventId == anEvent.eventId){
+				// supprimer cet evènement
+				delete this.eventsByGroup[groupForEvent.id][eventId];
 				break;
 			}
 		}
@@ -311,9 +325,11 @@ $.extend(TimeLine.prototype, {
 			
 			// Barre des occupations mini
 			var allEvents = this.eventsByGroup[group.id];
-			var allVectors = $.map((allEvents || []),function(evt){
-				return evt.asVector(container);
-			});
+			var allVectors = [];
+			for(evtId in allEvents){
+				var vect = allEvents[evtId].asVector(container);
+				allVectors.push(vect);
+			}
 			
 			resArrayMini = Vector.mergeContinuous(allVectors);
 			Vector.flatDisplay(resArrayMini, divDisplay,0,nb_steps, "occupationLeak");
@@ -323,9 +339,11 @@ $.extend(TimeLine.prototype, {
 			for(var j=0;j<group.resources.length;j++){
 				var resource = group.resources[j];
 				var allEventsOfResource = this.eventsByResource[resource.id];
-				var allVectorsOfResource = $.map((allEventsOfResource || []),function(evt){
-					return evt.asVector(container);
-				});
+				var allVectorsOfResource = [];
+				for(evtId in allEventsOfResource){
+					var vect = allEvents[evtId].asVector(container);
+					allVectorsOfResource.push(vect);
+				}
 				allVectors.push(allVectorsOfResource);
 			}
 			
@@ -341,10 +359,19 @@ $.extend(TimeLine.prototype, {
 		// mise à jour de la hauteur des ressources
 		for(resource_id in this.eventsByResource){
 			var nb_overlaps_maxi = 0;
-			var allEvents = this.eventsByResource[resource_id];
-			var allVectors = $.map((allEvents || []),function(evt){
-				return evt.asVector(container);
-			});
+			var allEventsDict = this.eventsByResource[resource_id];
+			var allEventsArray = [];
+			var allVectors = [];
+			var i=0;
+			for(evtId in allEventsDict){
+				var vect = allEventsDict[evtId].asVector(container);
+				allEventsArray[i] = allEventsDict[evtId];
+				allVectors[i] = vect;
+				i++;
+			}
+			if(allVectors.length == 0){
+				continue;
+			}
 			nb_overlaps_maxi = Vector.countOverlaps(allVectors);
 			$("#resource_"+resource_id).removeClass("overlap_1 overlap_2 overlap_3 overlap_4 overlap_5 overlap_6");
 			$("#events_r_"+resource_id).removeClass("overlap_1 overlap_2 overlap_3 overlap_4 overlap_5 overlap_6");
@@ -380,8 +407,8 @@ $.extend(TimeLine.prototype, {
 					gridOfVect[currentLine] = Array();
 				}
 				gridOfVect[currentLine].push(allVectors[currentVect]);
-				
-				$("#"+allEvents[currentVect].eventId).css('top', (1+(currentLine * 24))+'px');
+
+				$("#"+allEventsArray[currentVect].eventId).css('top', (1+(currentLine * 24))+'px');
 			}
 		}
 		
@@ -423,10 +450,10 @@ $.extend(TimeLine.prototype, {
 			this.header.hide();
 		}
 	},
-	sub_defineEvents: function(){
+	sub_defineJSEvents: function(){
 		// TO OVERRIDE
 	},
-	defineEvents: function(){
+	defineJSEvents: function(){
 		var calendarObject = this;
 		$(".prev").click(function () {
 			calendarObject.goToPrev();
@@ -462,7 +489,7 @@ $.extend(TimeLine.prototype, {
 		$(".y-scroll").scroll(function(){
 			$(".no-scroll").scrollLeft( $(this).scrollLeft() );
 		});
-		this.sub_defineEvents();
+		this.sub_defineJSEvents();
 	}
 });
 
@@ -540,7 +567,8 @@ $.extend(TimeLineMonth.prototype, {
 		
 		this._drawGridEvents(horizontalCalendarContent);
 		this.defineHeader();
-		this.defineEvents();
+		this.defineJSEvents();
+		
 		if(withCallback == null || withCallback == true){
 			// utiliser le callback pour définir les évènements
 			this.updateCallback();
@@ -551,8 +579,8 @@ $.extend(TimeLineMonth.prototype, {
 				if(this.eventsByGroup[group.id] == null){
 					continue;
 				}
-				for(var j=0;j<this.eventsByGroup[group.id].length;j++){
-					var eventCal = this.eventsByGroup[group.id][j];
+				for(eventId in this.eventsByGroup[group.id]){
+					var eventCal = this.eventsByGroup[group.id][eventId];
 					eventCal.defineHTMLCompontentsAndJSEvents(this);
 				}
 			}
@@ -584,7 +612,7 @@ $.extend(TimeLineMonth.prototype, {
 		$(".eventsContainer").width($(".largeCalendar").width() - $(".headerResources").width() - 1);
 	},
 	
-	sub_defineEvents: function(){
+	sub_defineJSEvents: function(){
 		// ne rien faire de plus
 	}
 	
@@ -636,6 +664,7 @@ $.extend(TimeLineWeek.prototype, {
 			spanLabelCenter, listResources, indexGroup, group, indexResource,
 			resource, horizontalCalendarContent, lineOfDays, htmlDays, 
 			indexDay, day2digits;
+		
 		var firstDayOfYear = new Date(this.year, 0, 1);
 		var milisecondsOffset = 1000 * 60 * 60 * 24 * 7 * (this.weekNumber - 1);
 		var targetTime = firstDayOfYear.getTime() + milisecondsOffset - 86400000;
@@ -684,7 +713,8 @@ $.extend(TimeLineWeek.prototype, {
 		
 		this._drawGridEvents(horizontalCalendarContent);
 		this.defineHeader();
-		this.defineEvents();
+		this.defineJSEvents();
+		
 		if(withCallback == null || withCallback == true){
 			// utiliser le callback pour définir les évènements
 			this.updateCallback();
@@ -695,8 +725,8 @@ $.extend(TimeLineWeek.prototype, {
 				if(this.eventsByGroup[group.id] == null){
 					continue;
 				}
-				for(var j=0;j<this.eventsByGroup[group.id].length;j++){
-					var eventCal = this.eventsByGroup[group.id][j];
+				for(eventId in this.eventsByGroup[group.id]){
+					var eventCal = this.eventsByGroup[group.id][eventId];
 					eventCal.defineHTMLCompontentsAndJSEvents(this);
 				}
 			}
@@ -728,7 +758,7 @@ $.extend(TimeLineWeek.prototype, {
 		$(".eventsContainer").width($(".largeCalendar").width() - $(".headerResources").width() - 1);
 	},
 	
-	sub_defineEvents: function(){
+	sub_defineJSEvents: function(){
 		// ne rien faire de plus
 	}
 	
@@ -831,7 +861,7 @@ $.extend(TimeLineDay.prototype, {
 		
 		this._drawGridEvents(horizontalCalendarContent);
 		this.defineHeader();
-		this.defineEvents();
+		this.defineJSEvents();
 		if(withCallback == null || withCallback == true){
 			// utiliser le callback pour définir les évènements
 			this.updateCallback();
@@ -842,8 +872,8 @@ $.extend(TimeLineDay.prototype, {
 				if(this.eventsByGroup[group.id] == null){
 					continue;
 				}
-				for(var j=0;j<this.eventsByGroup[group.id].length;j++){
-					var eventCal = this.eventsByGroup[group.id][j];
+				for(eventId in this.eventsByGroup[group.id]){
+					var eventCal = this.eventsByGroup[group.id][eventId];
 					eventCal.defineHTMLCompontentsAndJSEvents(this);
 				}
 			}
@@ -851,7 +881,7 @@ $.extend(TimeLineDay.prototype, {
 		this.updateOccupation();
 	},
 
-	sub_defineEvents: function(){
+	sub_defineJSEvents: function(){
 		// ne rien faire de plus
 	},
 	goToNext: function(){
@@ -951,8 +981,13 @@ $.extend(EventCal.prototype, {
 			margin = containerObject.cellWidth * (newStartHour);
 			width = containerObject.cellWidth * (newEndHour - newStartHour) - 3;
 		}
+		// evenement existe déjà ? --> supprimer
+		if( $("#"+containerId).find("#"+this.eventId) ){
+			$("#"+this.eventId).remove();
+		}
 		$("#"+containerId).find("#events_r_"+this.resourceId).append('<div id="'+this.eventId+'" class="event" style="left: '+margin+'px;width:'+width+'px;">'+this.label+'</div>');
 		this.jObject = $("#"+this.eventId);
+		
 		$("#"+containerId).find("#"+this.eventId).draggable({ 
 			containment: 'DOM',
 			revert: 'invalid',
